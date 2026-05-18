@@ -20,7 +20,7 @@ from dizimus.apps.users.api import router as users_router
 api = NinjaAPI(
     title="DIZIMUS API",
     version="1.0.0",
-    description="API para gerenciamento de igrejas e membros.",
+    description="API para gerenciamento de dízimos.",
     auth=JWTAuth(),
     urls_namespace="api",
     docs=Swagger(settings={

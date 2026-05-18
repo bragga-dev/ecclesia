@@ -22,6 +22,9 @@ from dizimus.apps.users.exceptions import (
     InvalidToken,
 )
 
+import uuid  # se já não tiver
+from dizimus.apps.users.models import User, Church, Member, ChurchAddress, MemberAddress  # complementa o import já existente
+
 if TYPE_CHECKING:
     from dizimus.apps.users.schemas import RegisterIn, UserUpdateIn
 
@@ -144,3 +147,86 @@ def _make_tokens(user: User) -> dict:
         "access":  str(refresh.access_token),
         "refresh": str(refresh),
     }
+
+def _get_church(user: User) -> Church:
+    church, _ = Church.objects.get_or_create(user=user)
+    return church
+
+def _get_member(user: User) -> Member:
+    member, _ = Member.objects.get_or_create(user=user)
+    return member   
+
+# ── Profile update ────────────────────────────────────────────────────────────
+
+def update_church_profile(user: User, data: ChurchUpdateIn) -> Church:
+    """
+    Atualiza o perfil da Igreja.
+    Valida unicidade de CNPJ antes de persistir.
+    """
+    payload = data.model_dump(exclude_none=True)
+
+    if "cnpj" in payload:
+        if Church.objects.filter(cnpj=payload["cnpj"]).exclude(user=user).exists():
+            raise UserAlreadyExists("CNPJ")
+    return repositories.update_church_profile(_get_church(user), **payload)
+
+
+def update_member_profile(user: User, data: MemberUpdateIn) -> Member:
+    """
+    Atualiza o perfil do Membro.
+    Valida unicidade de CPF antes de persistir.
+    """
+    payload = data.model_dump(exclude_none=True)
+
+    if "cpf" in payload:
+        if Member.objects.filter(cpf=payload["cpf"]).exclude(user=user).exists():
+            raise UserAlreadyExists("CPF")
+    return repositories.update_member_profile(_get_member(user), **payload)
+
+
+# ── Address — Church ──────────────────────────────────────────────────────────
+
+def list_my_addresses(user: User):
+    if user.role == User.UserRole.CHURCH:
+        return repositories.get_church_addresses(_get_church(user))
+    return repositories.get_member_addresses(_get_member(user))
+    
+def create_my_address(user: User, data: AddressIn):
+    payload = data.model_dump()
+    if user.role == User.UserRole.CHURCH:
+        return repositories.create_church_address(_get_church(user), **payload)
+    return repositories.create_member_address(user.member, **payload)
+
+
+def update_my_address(user: User, address_id: uuid.UUID, data: AddressUpdateIn):
+    payload = data.model_dump(exclude_none=True)
+
+    if user.role == User.UserRole.CHURCH:
+        address = repositories.get_church_address_by_id(_get_church(user), address_id)
+        if not address:
+            return None
+        return repositories.update_church_address(address, **payload)
+
+    address = repositories.get_member_address_by_id(_get_member(user), address_id)
+    if not address:
+        return None
+    return repositories.update_member_address(address, **payload)
+
+
+def delete_my_address(user: User, address_id: uuid.UUID) -> bool:
+    """Retorna True se deletou, False se não encontrou."""
+    if user.role == User.UserRole.CHURCH:
+        address = repositories.get_church_address_by_id(_get_church(user), address_id)
+        if not address:
+            return False
+        repositories.delete_church_address(address)
+        return True
+
+    address = repositories.get_member_address_by_id(_get_member(user), address_id)
+    if not address:
+        return False
+    repositories.delete_member_address(address)
+    return True
+
+
+

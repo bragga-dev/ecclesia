@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from typing import Optional
-from ninja import Schema, Field, ModelSchema
+from ninja import Schema, Field
 from ninja import UploadedFile
 from pydantic import field_validator, model_validator
 from validate_docbr import CPF, CNPJ
@@ -21,8 +21,8 @@ _cnpj = CNPJ()
 class RegisterIn(Schema):
     """Payload de cadastro. Role deve ser 'church' ou 'member'."""
     username:   str = Field(..., min_length=3, max_length=15)
-    first_name: str = Field(..., min_length=2, max_length=30)
-    last_name:  str = Field(..., min_length=2, max_length=30)
+    first_name: str = Field(..., min_length=2, max_length=100)
+    last_name:  Optional[str] = Field(None, max_length=100)
     email:      str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
     password:   str = Field(..., min_length=8)
     password2:  str = Field(..., min_length=8)
@@ -51,6 +51,13 @@ class RegisterIn(Schema):
         if self.password != self.password2:
             raise ValueError("As senhas não coincidem.")
         return self
+    
+    @model_validator(mode="after")
+    def validate_role_fields(self) -> "RegisterIn":
+        if self.role == User.UserRole.MEMBER and not self.last_name:
+            raise ValueError("Sobrenome é obrigatório para membros.")
+        return self
+
 
 
 class LoginIn(Schema):
@@ -133,10 +140,11 @@ class UserOut(Schema):
 
 class UserUpdateIn(Schema):
     """Atualização parcial do perfil. Todos os campos são opcionais."""
-    first_name: Optional[str] = Field(None, min_length=2, max_length=30)
-    last_name:  Optional[str] = Field(None, min_length=2, max_length=30)
-    username:   Optional[str] = Field(None, min_length=3, max_length=15)
+    first_name: Optional[str] = Field(None, min_length=2, max_length=100)
+    last_name:  Optional[str] = Field(None, min_length=2, max_length=100)
+    username:   Optional[str] = Field(None, min_length=3, max_length=100)
     phone:      Optional[str] = None
+    
 
 
 # ─────────────────────────────────────────────────────────────────────────────
