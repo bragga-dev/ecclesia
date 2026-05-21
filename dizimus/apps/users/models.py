@@ -45,36 +45,89 @@ DEFAULT_CHURCH_BANNER = "default/banner.jpg"
 
 
 class UserManager(BaseUserManager):
-    def _create_user(self, email, password, is_staff, is_superuser, **extra_fields):
+
+    def _create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError(_('O e-mail é obrigatório.'))
+
         email = self.normalize_email(email)
-        now = timezone.now()
+
+        role = extra_fields.get('role', User.UserRole.MEMBER)
+
+        # ─────────────────────────────────────────────
+        # ADMIN ROOT
+        # ─────────────────────────────────────────────
+        if role == User.UserRole.ADMIN:
+            extra_fields.setdefault('is_staff', True)
+            extra_fields.setdefault('is_superuser', True)
+            extra_fields.setdefault('is_active', True)
+            extra_fields.setdefault('is_trusty', True)
+
+        # ─────────────────────────────────────────────
+        # MEMBER e CHURCH
+        # Necessitam confirmação/aprovação
+        # ─────────────────────────────────────────────
+        else:
+            extra_fields.setdefault('is_staff', False)
+            extra_fields.setdefault('is_superuser', False)
+            extra_fields.setdefault('is_active', False)
+            extra_fields.setdefault('is_trusty', False)
+
         user = self.model(
             email=email,
-            is_staff=is_staff,
-            is_active=True,
-            is_superuser=is_superuser,
-            last_login=now,
-            date_joined=now,
+            last_login=timezone.now(),
+            date_joined=timezone.now(),
             **extra_fields,
         )
+
         user.set_password(password)
         user.save(using=self._db)
+
         return user
 
     def create_user(self, email, password=None, **extra_fields):
-        return self._create_user(email, password, False, False, **extra_fields)
+        """
+        Cria MEMBER ou CHURCH.
+        ADMIN só pode ser criado via create_superuser.
+        """
 
-    def create_superuser(self, email, password, **extra_fields):
-        user = self._create_user(email, password, True, True, **extra_fields)
-        user.is_active = True
-        user.save(using=self._db)
-        return user
+        role = extra_fields.get('role', User.UserRole.MEMBER)
+
+        if role == User.UserRole.ADMIN:
+            raise ValueError(
+                _('Use create_superuser para criar administradores.')
+            )
+
+        extra_fields.setdefault('role', User.UserRole.MEMBER)
+
+        return self._create_user(email, password, **extra_fields)
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        """
+        Cria ADMIN ROOT.
+        Usado pelo comando:
+        python manage.py createsuperuser
+        """
+
+        extra_fields.setdefault('role', User.UserRole.ADMIN)
+
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('is_trusty', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError(_('Superuser deve ter is_staff=True.'))
+
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError(_('Superuser deve ter is_superuser=True.'))
+
+        return self._create_user(email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     class UserRole(models.TextChoices):
+        ADMIN  = "admin", "Administrador Root"
         MEMBER = "member", "Membro"
         CHURCH = "church", "Igreja"
 
@@ -111,7 +164,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone       = PhoneNumberField(region="BR", blank=True, default="", null=False, help_text=_('Número de telefone no formato internacional, ex: +55 11 99999-8888.'))
     slug        = models.SlugField(max_length=255, unique=True, editable=False)
     is_staff    = models.BooleanField(_('Staff'), default=False)
-    is_active   = models.BooleanField(_('Ativo?'), default=True)
+    is_active   = models.BooleanField(_('Ativo?'), default=False)
     is_trusty   = models.BooleanField(_('Confiável?'), default=False)
     date_joined = models.DateTimeField(_('Data de admissão'), default=timezone.now)
     created_at  = models.DateTimeField(_('Criado em'), auto_now_add=True)

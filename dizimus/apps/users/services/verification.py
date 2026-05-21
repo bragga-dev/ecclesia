@@ -6,7 +6,7 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 
 from dizimus.apps.users.models import User
-from dizimus.apps.users.exceptions import InvalidToken, UserNotFound
+from dizimus.apps.users.exceptions import InvalidToken
 from dizimus.apps.users.repositories import activate_user
 
 
@@ -20,10 +20,8 @@ def verify_email(uidb64: str, token: str) -> User:
         user = User.objects.get(pk=uid)
     except (User.DoesNotExist, ValueError, TypeError):
         raise InvalidToken("Link inválido ou usuário não encontrado.")
-
     if not default_token_generator.check_token(user, token):
         raise InvalidToken("Token inválido ou expirado.")
-
-    if user.is_active:
-        return user
     return activate_user(user)
+
+
