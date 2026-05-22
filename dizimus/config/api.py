@@ -5,7 +5,7 @@ from django.http import HttpRequest
 from django.http import JsonResponse
 
 # USERS
-from dizimus.apps.users.auth import router as auth_router
+from dizimus.apps.users.api.auth import router as auth_router
 from dizimus.apps.users.api import router as users_router
 
 # CHURCHES
