@@ -16,13 +16,13 @@ from .conftest import build_address_data
 # ─────────────────────────────────────────────────────────────────────────────
 
 def create_member_address(member, **overrides):
-    from dizimus.apps.users.models import MemberAddress
+    from dizimus.apps.users.models.member import MemberAddress
     # from dizimus.apps.users.member import MemberAddress
     return MemberAddress.objects.create(member=member, **build_address_data(**overrides))
 
 
 def create_church_address(church, **overrides):
-    from dizimus.apps.users.models import ChurchAddress
+    from dizimus.apps.users.models.church import ChurchAddress
     # from dizimus.apps.users.church import ChurchAddress
     return ChurchAddress.objects.create(church=church, **build_address_data(**overrides))
 
@@ -53,7 +53,7 @@ class TestAddressSlug:
         assert addr.slug != ""
 
     def test_slug_incrementa_para_evitar_colisao(self, member):
-        from dizimus.apps.users.models import MemberAddress
+        from dizimus.apps.users.models.member import MemberAddress
         # Força a mesma base de slug usando mesmo endereço — o UUID curto no
         # final varia, mas testamos o mecanismo de sufixo via mock.
         a1 = create_member_address(member)
@@ -120,7 +120,7 @@ class TestMemberAddressPrincipal:
         assert addr_m2.principal is True
 
     def test_apenas_um_principal_por_member(self, member):
-        from dizimus.apps.users.models import MemberAddress
+        from dizimus.apps.users.models.member import MemberAddress
         create_member_address(member, number="1")
         create_member_address(member, number="2")
         create_member_address(member, number="3")
@@ -151,7 +151,7 @@ class TestChurchAddressPrincipal:
         assert addr1.principal is True
 
     def test_apenas_um_principal_por_church(self, church):
-        from dizimus.apps.users.models import ChurchAddress
+        from dizimus.apps.users.models.church import ChurchAddress
         for n in ("10", "20", "30"):
             create_church_address(church, number=n)
         total_principais = ChurchAddress.objects.filter(

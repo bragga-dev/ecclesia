@@ -10,7 +10,7 @@ import pytest
 from unittest.mock import patch, MagicMock, PropertyMock
 from django.core.exceptions import ValidationError
 from django.test import override_settings
-
+from django.utils.text import slugify
 from .conftest import build_user_data, VALID_PHONE
 
 
@@ -44,7 +44,7 @@ class TestUserSlug:
         assert u2.slug.startswith("ana-lima")
 
     def test_slug_incrementa_com_sufixo_numerico(self, db):
-        from dizimus.apps.users.models import User
+        from dizimus.apps.users.models.user import User
         base_data = dict(first_name="Pedro", last_name="Costa")
         u1 = User.objects.create_user(**build_user_data(
             email="p1@teste.com", username="pedro1", **base_data
@@ -58,19 +58,19 @@ class TestUserSlug:
         slugs = {u1.slug, u2.slug, u3.slug}
         assert len(slugs) == 3     # todos diferentes
 
-        def test_slug_usa_uuid_quando_nome_vazio(self, db):
-            from dizimus.apps.users.models import User
-            
-            user = User(
-                email="sem_nome@teste.com",
-                username="semnome",
-                first_name="Igreja Teste", 
-                last_name="",              
-                role="church",
-            )
-            user.set_password("Senha123!")
-            user.save()
+    def test_slug_usa_uuid_quando_nome_vazio(self, db):
+        from dizimus.apps.users.models.user import User
         
+        user = User(
+            email="sem_nome@teste.com",
+            username="semnome",
+            first_name="Igreja Teste", 
+            last_name="",              
+            role="church",
+        )
+        user.set_password("Senha123!")
+        user.save()
+    
         # O slug deve ser gerado a partir do first_name
         assert user.slug == slugify("Igreja Teste")
 
@@ -105,14 +105,14 @@ class TestUserSlug:
 class TestUserClean:
 
     def test_member_sem_sobrenome_levanta_validation_error(self, db):
-        from dizimus.apps.users.models import User
+        from dizimus.apps.users.models.user import User
         with pytest.raises(ValidationError) as exc_info:
             User.objects.create_user(**build_user_data(last_name=""))
         assert "last_name" in exc_info.value.message_dict
 
     def test_church_sem_sobrenome_nao_levanta_erro(self, db):
         """Para CHURCH o sobrenome é opcional."""
-        from dizimus.apps.users.models import User
+        from dizimus.apps.users.models.user import User
         user = User.objects.create_user(**build_user_data(
             email="church_sem_last@teste.com",
             username="church_sem_last",
@@ -123,7 +123,7 @@ class TestUserClean:
         assert user.pk is not None
 
     def test_admin_sem_sobrenome_nao_levanta_erro(self, db):
-        from dizimus.apps.users.models import User
+        from dizimus.apps.users.models.user import User
         user = User.objects.create_superuser(**build_user_data(
             email="admin_sem_last@teste.com",
             username="admin_sem_last",
@@ -141,7 +141,7 @@ class TestUserClean:
 class TestUserPhoto:
 
     def test_foto_padrao_definida_ao_criar(self, member_user):
-        from dizimus.apps.users.models import DEFAULT_USER_PHOTO
+        from dizimus.apps.users.models.user import DEFAULT_USER_PHOTO
         assert member_user.photo.name == DEFAULT_USER_PHOTO
 
     def test_photo_url_retorna_url_padrao_quando_foto_e_padrao(self, member_user):
@@ -204,7 +204,7 @@ class TestUserHelpers:
         assert member_user.get_full_name() == "João Silva"
 
     def test_get_full_name_sem_sobrenome(self, db):
-        from dizimus.apps.users.models import User
+        from dizimus.apps.users.models.user import User
         user = User.objects.create_user(**build_user_data(
             email="sn@teste.com", username="semnome2",
             first_name="Maria", last_name="",
@@ -219,7 +219,7 @@ class TestUserHelpers:
         assert str(member_user) == member_user.email
 
     def test_email_user_chama_send_mail(self, member_user):
-        with patch("dizimus.apps.users.models.send_mail") as mock_send:
+        with patch("dizimus.apps.users.models.user.send_mail") as mock_send:
             member_user.email_user("Assunto", "Corpo")
             mock_send.assert_called_once_with(
                 "Assunto", "Corpo", None, [member_user.email]
@@ -239,7 +239,7 @@ class TestUserHelpers:
 class TestHasNameChanged:
 
     def test_falso_em_nova_instancia_nao_salva(self, db):
-        from dizimus.apps.users.models import User
+        from dizimus.apps.users.models.user import User
         user = User(
             email="novo@teste.com",
             username="novousr",

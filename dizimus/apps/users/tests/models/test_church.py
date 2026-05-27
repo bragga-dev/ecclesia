@@ -37,7 +37,7 @@ class TestChurchBasic:
         assert church_user.church == church
 
     def test_nao_pode_criar_duas_churches_para_mesmo_user(self, church_user, church):
-        from dizimus.apps.users.models import Church
+        from dizimus.apps.users.models.church import Church
         with pytest.raises(IntegrityError):
             Church.objects.create(user=church_user)
 
@@ -59,11 +59,11 @@ class TestChurchBasic:
 class TestChurchBanner:
 
     def test_banner_padrao_definido_ao_criar(self, church):
-        from dizimus.apps.users.models import DEFAULT_CHURCH_BANNER
+        from dizimus.apps.users.models.church import DEFAULT_CHURCH_BANNER
         assert church.banner.name == DEFAULT_CHURCH_BANNER
 
     def test_banner_padrao_definido_quando_salvo_sem_banner(self, church):
-        from dizimus.apps.users.models import DEFAULT_CHURCH_BANNER
+        from dizimus.apps.users.models.church import DEFAULT_CHURCH_BANNER
         church.banner = None
         church.save()
         church.refresh_from_db()
@@ -132,7 +132,7 @@ class TestChurchAsaasToken:
 class TestRefreshTotalMembers:
 
     def _create_link(self, member, church, status):
-        from dizimus.apps.users.models import MemberChurch
+        from dizimus.apps.community.models.member_church import MemberChurch
         return MemberChurch.objects.create(
             member=member, church=church, status=status
         )
@@ -143,28 +143,28 @@ class TestRefreshTotalMembers:
         assert church.total_members == 0
 
     def test_contabiliza_membros_ativos(self, member, church):
-        from dizimus.apps.users.models import MemberChurch
+        from dizimus.apps.community.models.member_church import MemberChurch
         self._create_link(member, church, MemberChurch.Status.ACTIVE)
         church.refresh_total_members()
         church.refresh_from_db()
         assert church.total_members == 1
 
     def test_nao_contabiliza_membros_pendentes(self, member, church):
-        from dizimus.apps.users.models import MemberChurch
+        from dizimus.apps.community.models.member_church import MemberChurch
         self._create_link(member, church, MemberChurch.Status.PENDING)
         church.refresh_total_members()
         church.refresh_from_db()
         assert church.total_members == 0
 
     def test_nao_contabiliza_membros_inativos(self, member, church):
-        from dizimus.apps.users.models import MemberChurch
+        from dizimus.apps.community.models.member_church import MemberChurch
         self._create_link(member, church, MemberChurch.Status.INACTIVE)
         church.refresh_total_members()
         church.refresh_from_db()
         assert church.total_members == 0
 
     def test_contabiliza_apenas_ativos_misturados(self, db, member, second_member, church):
-        from dizimus.apps.users.models import MemberChurch
+        from dizimus.apps.community.models.member_church import MemberChurch
         self._create_link(member,        church, MemberChurch.Status.ACTIVE)
         self._create_link(second_member, church, MemberChurch.Status.INACTIVE)
         church.refresh_total_members()
@@ -172,7 +172,7 @@ class TestRefreshTotalMembers:
         assert church.total_members == 1
 
     def test_contabiliza_multiplos_ativos(self, db, member, second_member, church):
-        from dizimus.apps.users.models import MemberChurch
+        from dizimus.apps.community.models.member_church import MemberChurch
         self._create_link(member,        church, MemberChurch.Status.ACTIVE)
         self._create_link(second_member, church, MemberChurch.Status.ACTIVE)
         church.refresh_total_members()
@@ -180,7 +180,7 @@ class TestRefreshTotalMembers:
         assert church.total_members == 2
 
     def test_atualiza_apos_inativar_membro(self, member, church):
-        from dizimus.apps.users.models import MemberChurch
+        from dizimus.apps.community.models.member_church import MemberChurch
         link = self._create_link(member, church, MemberChurch.Status.ACTIVE)
         church.refresh_total_members()
         assert church.total_members == 1
@@ -231,7 +231,7 @@ class TestChurchAddressPrincipal:
     """
 
     def _addr(self, church, number="1", principal=True):
-        from dizimus.apps.users.models import ChurchAddress
+        from dizimus.apps.users.models.church import ChurchAddress
         from .conftest import build_address_data
         return ChurchAddress.objects.create(
             church=church, **build_address_data(number=number, principal=principal)
