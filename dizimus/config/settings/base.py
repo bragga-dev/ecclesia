@@ -381,9 +381,11 @@ AWS_S3_VERIFY = False
 
 AWS_S3_ADDRESSING_STYLE = "path"
 
+AWS_S3_CUSTOM_DOMAIN = env("MINIO_PUBLIC_URL", default=None)
+
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
+        "BACKEND": "dizimus.config.storages.MediaFilesStorage",
     },
 
     "staticfiles": {
@@ -391,10 +393,8 @@ STORAGES = {
     },
 }
 
-MEDIA_URL = (
-    f"{AWS_S3_ENDPOINT_URL}/"
-    f"{AWS_STORAGE_BUCKET_NAME}/"
-)
+MEDIA_URL = f"http://{env('MINIO_PUBLIC_URL', default='localhost:9000/dizimus-media')}/"
+
 
 # =========================================================
 # FIELD ENCRYPTION

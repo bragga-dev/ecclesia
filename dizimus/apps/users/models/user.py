@@ -15,6 +15,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from phonenumbers import parse, format_number, PhoneNumberFormat
 
 from dizimus.apps.users.validators.validate_image_file import validate_image_file
+from dizimus.config.storages import MediaFilesStorage
 from .constants import ROLE_ADMIN, ROLE_MEMBER, ROLE_CHURCH
 from dizimus.apps.users.models.user_manage import UserManager
 
@@ -68,6 +69,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # upload_to é callable → gera: photos/<uuid>/photo.jpg no MinIO.
     # default aponta para arquivo que deve existir no bucket dizimus-media.
     photo = models.ImageField(
+        storage=MediaFilesStorage(),
         upload_to=user_photo_path,
         default=DEFAULT_USER_PHOTO,
         blank=True,
@@ -136,7 +138,7 @@ class User(AbstractBaseUser, PermissionsMixin):
             except Exception:
                 pass
         return f"{settings.MEDIA_URL}{DEFAULT_USER_PHOTO}"
-
+    
     # ── Utilitários internos ──────────────────────────────────────────────────
 
     @staticmethod
