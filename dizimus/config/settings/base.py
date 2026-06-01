@@ -358,7 +358,7 @@ AUTH_USER_MODEL = "users.User"
 
 
 # =========================================================
-# STORAGES — MINIO / S3
+# MINIO / S3
 # =========================================================
 
 AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
@@ -369,33 +369,22 @@ AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
 
 AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL")
 
-AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME",  default="us-east-1")
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1",)
 
 AWS_DEFAULT_ACL = None
 
-AWS_QUERYSTRING_AUTH = False
-
 AWS_S3_FILE_OVERWRITE = False
 
-AWS_S3_VERIFY = False
-
 AWS_S3_ADDRESSING_STYLE = "path"
-
-AWS_S3_CUSTOM_DOMAIN = env("MINIO_PUBLIC_URL", default=None)
 
 STORAGES = {
     "default": {
         "BACKEND": "dizimus.config.storages.MediaFilesStorage",
     },
-
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
-
-MEDIA_URL = f"http://{env('MINIO_PUBLIC_URL', default='localhost:9000/dizimus-media')}/"
-
-
 # =========================================================
 # FIELD ENCRYPTION
 # =========================================================
@@ -406,3 +395,18 @@ FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 # FRONTEND  
 # =========================================================
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+
+
+
+# =========================================================
+# CACHES (REDIS)
+# =========================================================
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL"),
+    }
+}
+
+RATELIMIT_USE_CACHE = "default"
+RATELIMIT_FAIL_OPEN = False  

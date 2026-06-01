@@ -105,3 +105,23 @@ CELERY_TASK_EAGER_PROPAGATES = True
 # =========================================================
 
 INTERNAL_IPS = ["127.0.0.1",]
+
+
+# =========================================================
+# MINIO DEV
+# =========================================================
+
+AWS_S3_VERIFY = False
+
+AWS_QUERYSTRING_AUTH = False
+
+AWS_S3_CUSTOM_DOMAIN = env("MINIO_PUBLIC_URL",
+    default="localhost:9000/dizimus-media"
+)
+
+MEDIA_URL = (
+    f"http://"
+    f"{env('MINIO_PUBLIC_URL', default='localhost:9000/dizimus-media')}/"
+)
+
+MINIO_URL_PROTOCOL = "http:"

@@ -192,8 +192,18 @@ USE_ETAGS = True
 
 
 # =========================================================
-# MINIO / S3
+# MINIO PROD
 # =========================================================
-MINIO_URL_PROTOCOL = "https:"
 
 AWS_S3_VERIFY = True
+
+AWS_QUERYSTRING_AUTH = False
+
+AWS_S3_CUSTOM_DOMAIN = env("MINIO_PUBLIC_URL")
+
+MEDIA_URL = (
+    f"https://"
+    f"{env('MINIO_PUBLIC_URL')}/"
+)
+
+MINIO_URL_PROTOCOL = "https:"
