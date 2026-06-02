@@ -109,8 +109,10 @@ class Church(models.Model):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+        if not self.banner:
+            self.banner = DEFAULT_CHURCH_BANNER
         if not self.slug or self._state.adding or self.has_name_changed():
-            base_slug   = slugify(self.get_full_name()) or str(self.id)
+            base_slug = slugify(self.full_name or str(self.id))
             unique_slug = base_slug
             num = 1
             while Church.objects.filter(slug=unique_slug).exclude(pk=self.pk).exists():
@@ -118,12 +120,6 @@ class Church(models.Model):
                 num += 1
             self.slug = unique_slug
         super().save(*args, **kwargs)
-
-    def save(self, *args, **kwargs):
-        if not self.banner:
-            self.banner = DEFAULT_CHURCH_BANNER
-        super().save(*args, **kwargs)
-
 
 class ChurchAddress(BaseAddress):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

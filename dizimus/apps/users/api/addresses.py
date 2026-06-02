@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from ninja import Router
 
 from dizimus.apps.users import services
-from dizimus.apps.users.schemas.profile_schemas import (
+from dizimus.apps.users.schemas.addresses_schemas import (
     AddressIn,
     AddressOut,
     AddressUpdateIn,

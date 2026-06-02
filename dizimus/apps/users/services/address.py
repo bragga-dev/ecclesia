@@ -5,7 +5,7 @@ import uuid
 
 from dizimus.apps.users.models import User
 from dizimus.apps.users import repositories
-from dizimus.apps.users.schemas.profile_schemas import AddressIn, AddressUpdateIn
+from dizimus.apps.users.schemas.addresses_schemas import AddressIn, AddressUpdateIn
 
 
 def _get_church(user: User):

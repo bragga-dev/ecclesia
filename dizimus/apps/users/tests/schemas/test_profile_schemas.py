@@ -3,7 +3,7 @@
 import pytest
 from datetime import date, timedelta
 from pydantic import ValidationError
-from dizimus.apps.users.schemas.profile_schemas import (
+from dizimus.apps.users.schemas.addresses_schemas import (
     ChurchUpdateIn,
     ChurchProfileOut,
     MemberUpdateIn,

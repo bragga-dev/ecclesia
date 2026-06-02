@@ -1,7 +1,6 @@
 """
 Schemas — Pydantic models para validação e serialização.
 """
-# Users schemas (auth e user base)
 from dizimus.apps.users.schemas.users_schemas import (
     RegisterIn,
     LoginIn,
@@ -14,16 +13,22 @@ from dizimus.apps.users.schemas.users_schemas import (
     UserUpdateIn,
     MessageOut,
 )
-
-# Profile schemas (Church e Member específicos + Address)
-from dizimus.apps.users.schemas.profile_schemas import (
-    ChurchUpdateIn,
-    ChurchProfileOut,
-    MemberUpdateIn,
-    MemberProfileOut,
+from dizimus.apps.users.schemas.addresses_schemas import (
     AddressIn,
     AddressUpdateIn,
     AddressOut,
+)
+from dizimus.apps.users.schemas.profile_church_schema import ChurchProfileOut
+from dizimus.apps.users.schemas.profile_member_schema import MemberProfileOut
+from dizimus.apps.users.schemas.member_schemas import (
+    MemberOut,
+    MemberCreateIn,
+    MemberUpdateIn,
+)
+from dizimus.apps.users.schemas.church_schemas import (
+    ChurchOut,
+    ChurchCreateIn,
+    ChurchUpdateIn,
 )
 
 __all__ = [
@@ -39,10 +44,16 @@ __all__ = [
     "UserOut",
     "UserUpdateIn",
     # Profile
-    "ChurchUpdateIn",
     "ChurchProfileOut",
-    "MemberUpdateIn",
     "MemberProfileOut",
+    # Church
+    "ChurchOut",
+    "ChurchCreateIn",
+    "ChurchUpdateIn",
+    # Member
+    "MemberOut",
+    "MemberCreateIn",
+    "MemberUpdateIn",
     # Address
     "AddressIn",
     "AddressUpdateIn",

@@ -4,7 +4,7 @@ Profile Services — atualização de perfis específicos (Church/Member).
 from dizimus.apps.users.models import User, Church, Member
 from dizimus.apps.users import repositories
 from dizimus.apps.users.exceptions import UserAlreadyExists
-from dizimus.apps.users.schemas.profile_schemas import ChurchUpdateIn, MemberUpdateIn
+from dizimus.apps.users.schemas.addresses_schemas import ChurchUpdateIn, MemberUpdateIn
 from dizimus.apps.users.selectors.profile import get_church_by_cnpj, get_member_by_cpf
 from dizimus.apps.users.exceptions import UserAlreadyExists
 

@@ -4,38 +4,43 @@ from typing import Optional
 from ninja import Schema, Field
 from ninja import UploadedFile
 from pydantic import field_validator, model_validator
-from validate_docbr import CPF, CNPJ
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from dizimus.apps.users.models.user import User
 
-from dizimus.apps.users.models import User
+from enum import Enum
 
-_cpf  = CPF()
-_cnpj = CNPJ()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Auth
 # ─────────────────────────────────────────────────────────────────────────────
 
-class RegisterIn(Schema):
-    """Payload de cadastro. Role deve ser 'church' ou 'member'."""
-    username:   str = Field(..., min_length=3, max_length=15)
-    first_name: str = Field(..., min_length=2, max_length=100)
-    last_name:  Optional[str] = Field(None, max_length=100)
-    email:      str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
-    password:   str = Field(..., min_length=8)
-    password2:  str = Field(..., min_length=8)
-    role:       User.UserRole = User.UserRole.MEMBER
-    phone:      Optional[str] = None
 
-    @field_validator("username")
+LABEL_TO_VALUE = {
+    "Membro": "member",
+    "Igreja": "church",
+}
+VALUE_TO_LABEL = {v: k for k, v in LABEL_TO_VALUE.items()}
+
+
+class UserRoleEnum(str, Enum):
+    MEMBER = "member"
+    CHURCH = "church"
+
+class RegisterIn(Schema):
+    email:     str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
+    password:  str = Field(..., min_length=8)
+    password2: str = Field(..., min_length=8)
+    user_label: str = "Membro"  # front envia label; convertido abaixo
+    phone:     Optional[str] = None
+
+    @field_validator("user_label")
     @classmethod
-    def username_format(cls, v: str) -> str:
-        import re
-        if not re.match(r'^[\w.@+-]+$', v):
-            raise ValueError("Username inválido. Use apenas letras, números e @/./+/-/_.")
-        return v
+    def label_to_value(cls, v: str) -> str:
+        if v not in LABEL_TO_VALUE:
+            raise ValueError("Tipo de usuário inválido.")
+        return LABEL_TO_VALUE[v]
 
     @field_validator("password")
     @classmethod
@@ -51,15 +56,6 @@ class RegisterIn(Schema):
         if self.password != self.password2:
             raise ValueError("As senhas não coincidem.")
         return self
-    
-    @model_validator(mode="after")
-    def validate_role_fields(self) -> "RegisterIn":
-        if self.role == User.UserRole.MEMBER and not self.last_name:
-            raise ValueError("Sobrenome é obrigatório para membros.")
-        return self
-
-
-
 class LoginIn(Schema):
     email:    str
     password: str
@@ -117,64 +113,32 @@ class PasswordResetConfirmIn(Schema):
 # ─────────────────────────────────────────────────────────────────────────────
 
 class UserOut(Schema):
-    id:         uuid.UUID
-    username:   str
-    first_name: str
-    last_name:  str
-    email:      str
-    role:       str
-    photo_url:  str          # property do model — URL pública no MinIO
-    phone:      Optional[str]
-    slug:       str
-    is_trusty:  bool
+    id:          uuid.UUID
+    email:       str
+    role:        UserRoleEnum
+    photo_url:   str
+    phone:       Optional[str]
+    slug:        str
+    is_trusty:   bool
     date_joined: datetime
-    created_at: datetime
+    created_at:  datetime
+    user_label:  str
 
     @staticmethod
     def resolve_photo_url(obj: User) -> str:
-        return obj.photo_url  # usa a property com fallback seguro
+        return obj.photo_url
 
     @staticmethod
     def resolve_phone(obj: User) -> Optional[str]:
         return str(obj.phone) if obj.phone else None
 
-
+    @staticmethod
+    def resolve_user_label(obj: User) -> str:  
+        return VALUE_TO_LABEL.get(obj.role, obj.role)
 class UserUpdateIn(Schema):
     """Atualização parcial do perfil. Todos os campos são opcionais."""
-    first_name: Optional[str] = Field(None, min_length=2, max_length=100)
-    last_name:  Optional[str] = Field(None, min_length=2, max_length=100)
-    username:   Optional[str] = Field(None, min_length=3, max_length=100)
     phone:      Optional[str] = None
-    
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Endereço (base — reutilizado por Church e Member)
-# ─────────────────────────────────────────────────────────────────────────────
-
-class AddressIn(Schema):
-    cep:        str = Field(..., pattern=r'^\d{5}-\d{3}$', description="Formato: 00000-000")
-    road:       str = Field(..., max_length=255)
-    number:     str = Field(..., max_length=10)
-    district:   str = Field(..., max_length=100)
-    city:       str = Field(..., max_length=100)
-    state:      str = Field(..., min_length=2, max_length=2)
-    complement: Optional[str] = Field(None, max_length=255)
-    principal:  bool = True
-
-
-class AddressOut(Schema):
-    id:         uuid.UUID
-    cep:        str
-    road:       str
-    number:     str
-    district:   str
-    city:       str
-    state:      str
-    country:    str
-    complement: Optional[str]
-    principal:  bool
-    slug:       str
+    photo:      Optional[UploadedFile] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
