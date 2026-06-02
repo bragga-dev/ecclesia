@@ -4,7 +4,8 @@ Address Repository — persistência de endereços (Church e Member).
 import uuid
 from typing import Optional
 
-from dizimus.apps.users.models import Church, Member, ChurchAddress, MemberAddress
+from dizimus.apps.users.models.church import Church, ChurchAddress
+from dizimus.apps.users.models.member import  Member, MemberAddress
 
 
 # ── Church addresses ──────────────────────────────────────────────────────────

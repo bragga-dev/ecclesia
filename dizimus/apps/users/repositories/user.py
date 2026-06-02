@@ -2,17 +2,13 @@
 User Repository — persistência de User.
 """
 from typing import Optional
-
-from dizimus.apps.users.models import User
+from dizimus.apps.users.models.user import User
 
 
 def create_user(
     *,
     email: str,
     password: str,
-    username: str,
-    first_name: str,
-    last_name: str,
     role: str,
     phone: Optional[str] = None,
 ) -> User:
@@ -20,9 +16,6 @@ def create_user(
     user = User.objects.create_user(
         email=email,
         password=password,
-        username=username,
-        first_name=first_name,
-        last_name=last_name,
         role=role,
         phone=phone_value,
     )

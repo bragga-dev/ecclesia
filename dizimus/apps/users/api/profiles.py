@@ -7,12 +7,14 @@ from ninja import File, Router, UploadedFile
 from dizimus.apps.users import repositories, services
 from dizimus.apps.users.exceptions import UserAlreadyExists, PermissionDenied
 from dizimus.apps.users.models import User
+from dizimus.apps.users.schemas.church_schemas import ChurchUpdateIn
+from dizimus.apps.users.schemas.member_schemas import MemberUpdateIn
+from dizimus.apps.users.schemas.profile_church_schema import ChurchProfileOut
+from dizimus.apps.users.schemas.profile_member_schema import MemberProfileOut
 from dizimus.apps.users.schemas.addresses_schemas import (
-    ChurchProfileOut,
-    ChurchUpdateIn,
-    MemberProfileOut,
-    MemberUpdateIn,
+    AddressIn, AddressUpdateIn, AddressOut,
 )
+
 from dizimus.apps.users.schemas.users_schemas import MessageOut
 from dizimus.apps.users.validators.validate_image_file import validate_image_file
 

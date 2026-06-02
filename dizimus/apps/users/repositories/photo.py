@@ -2,8 +2,8 @@
 Photo Repository — gerenciamento de fotos e banners.
 """
 from django.core.files.uploadedfile import InMemoryUploadedFile
-
-from dizimus.apps.users.models import User, Church
+from dizimus.apps.users.models.user import User
+from dizimus.apps.users.models.church import Church
 
 
 def set_user_photo(user: User, photo: InMemoryUploadedFile) -> User:
