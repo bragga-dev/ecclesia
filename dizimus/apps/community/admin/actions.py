@@ -2,7 +2,7 @@
 
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
-from dizimus.apps.community.models.member_church import MemberChurch
+from dizimus.apps.community.models.member_church_model import MemberChurch
 
 
 

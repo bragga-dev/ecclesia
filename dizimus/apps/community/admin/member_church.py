@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
 
-from dizimus.apps.community.models.member_church import MemberChurch
+from dizimus.apps.community.models.member_church_model import MemberChurch
 from dizimus.apps.users.admin.actions import  export_to_csv
 from dizimus.apps.community.admin.actions import activate_memberships, deactivate_memberships
 

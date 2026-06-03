@@ -132,7 +132,7 @@ class TestChurchAsaasToken:
 class TestRefreshTotalMembers:
 
     def _create_link(self, member, church, status):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         return MemberChurch.objects.create(
             member=member, church=church, status=status
         )
@@ -143,28 +143,28 @@ class TestRefreshTotalMembers:
         assert church.total_members == 0
 
     def test_contabiliza_membros_ativos(self, member, church):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         self._create_link(member, church, MemberChurch.Status.ACTIVE)
         church.refresh_total_members()
         church.refresh_from_db()
         assert church.total_members == 1
 
     def test_nao_contabiliza_membros_pendentes(self, member, church):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         self._create_link(member, church, MemberChurch.Status.PENDING)
         church.refresh_total_members()
         church.refresh_from_db()
         assert church.total_members == 0
 
     def test_nao_contabiliza_membros_inativos(self, member, church):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         self._create_link(member, church, MemberChurch.Status.INACTIVE)
         church.refresh_total_members()
         church.refresh_from_db()
         assert church.total_members == 0
 
     def test_contabiliza_apenas_ativos_misturados(self, db, member, second_member, church):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         self._create_link(member,        church, MemberChurch.Status.ACTIVE)
         self._create_link(second_member, church, MemberChurch.Status.INACTIVE)
         church.refresh_total_members()
@@ -172,7 +172,7 @@ class TestRefreshTotalMembers:
         assert church.total_members == 1
 
     def test_contabiliza_multiplos_ativos(self, db, member, second_member, church):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         self._create_link(member,        church, MemberChurch.Status.ACTIVE)
         self._create_link(second_member, church, MemberChurch.Status.ACTIVE)
         church.refresh_total_members()
@@ -180,7 +180,7 @@ class TestRefreshTotalMembers:
         assert church.total_members == 2
 
     def test_atualiza_apos_inativar_membro(self, member, church):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         link = self._create_link(member, church, MemberChurch.Status.ACTIVE)
         church.refresh_total_members()
         assert church.total_members == 1

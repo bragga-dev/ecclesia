@@ -17,11 +17,11 @@ from  dizimus.apps.users.tests.models.conftest import  build_user_data
 class TestMemberChurch:
 
     def test_vinculo_criado_com_status_pending_por_padrao(self, member_church_link):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         assert member_church_link.status == MemberChurch.Status.PENDING
 
     def test_vinculo_criado_com_role_member_por_padrao(self, member_church_link):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         assert member_church_link.role == MemberChurch.Role.MEMBER
 
     def test_joined_at_preenchido_automaticamente(self, member_church_link):
@@ -40,7 +40,7 @@ class TestMemberChurch:
 
     def test_unique_constraint_member_church(self, member, church, member_church_link):
         """Membro não pode ter dois vínculos com a mesma igreja."""
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         with pytest.raises(IntegrityError):
             MemberChurch.objects.create(member=member, church=church)
 
@@ -48,7 +48,7 @@ class TestMemberChurch:
         """Um membro pode pertencer a mais de uma igreja (vínculos distintos)."""
         # from dizimus.apps.users.user import User
         # from dizimus.apps.users.church import Church
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         from dizimus.apps.users.models.church import  Church
         from dizimus.apps.users.models.user import  User
 
@@ -66,42 +66,42 @@ class TestMemberChurch:
         assert v1.pk != v2.pk
 
     def test_status_pode_ser_alterado_para_active(self, member_church_link):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         member_church_link.status = MemberChurch.Status.ACTIVE
         member_church_link.save()
         member_church_link.refresh_from_db()
         assert member_church_link.status == MemberChurch.Status.ACTIVE
 
     def test_status_pode_ser_alterado_para_inactive(self, member_church_link):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         member_church_link.status = MemberChurch.Status.INACTIVE
         member_church_link.save()
         member_church_link.refresh_from_db()
         assert member_church_link.status == MemberChurch.Status.INACTIVE
 
     def test_role_pode_ser_alterado_para_pastor(self, member_church_link):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         member_church_link.role = MemberChurch.Role.PASTOR
         member_church_link.save()
         member_church_link.refresh_from_db()
         assert member_church_link.role == MemberChurch.Role.PASTOR
 
     def test_role_pode_ser_alterado_para_treasurer(self, member_church_link):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         member_church_link.role = MemberChurch.Role.TREASURER
         member_church_link.save()
         member_church_link.refresh_from_db()
         assert member_church_link.role == MemberChurch.Role.TREASURER
 
     def test_role_pode_ser_alterado_para_secretary(self, member_church_link):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         member_church_link.role = MemberChurch.Role.SECRETARY
         member_church_link.save()
         member_church_link.refresh_from_db()
         assert member_church_link.role == MemberChurch.Role.SECRETARY
 
     def test_role_pode_ser_alterado_para_church_admin(self, member_church_link):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         member_church_link.role = MemberChurch.Role.CHURCH_ADMIN
         member_church_link.save()
         member_church_link.refresh_from_db()
@@ -109,7 +109,7 @@ class TestMemberChurch:
 
     def test_ordering_e_por_joined_at_decrescente(self, db, member, church, second_member):
         """O ordering padrão é -joined_at: mais recente primeiro."""
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         v1 = MemberChurch.objects.create(member=member,        church=church)
         v2 = MemberChurch.objects.create(member=second_member, church=church)
         qs = MemberChurch.objects.filter(church=church)
@@ -125,25 +125,25 @@ class TestMemberChurchChoices:
     """Garante que os valores dos TextChoices não mudam acidentalmente."""
 
     def test_status_active_value(self):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         assert MemberChurch.Status.ACTIVE == "active"
 
     def test_status_inactive_value(self):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         assert MemberChurch.Status.INACTIVE == "inactive"
 
     def test_status_pending_value(self):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         assert MemberChurch.Status.PENDING == "pending"
 
     def test_role_member_value(self):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         assert MemberChurch.Role.MEMBER == "member"
 
     def test_role_pastor_value(self):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         assert MemberChurch.Role.PASTOR == "pastor/padre"
 
     def test_role_church_admin_value(self):
-        from dizimus.apps.community.models.member_church  import MemberChurch
+        from dizimus.apps.community.models.member_church_model  import MemberChurch
         assert MemberChurch.Role.CHURCH_ADMIN == "admin"
