@@ -5,7 +5,7 @@ from datetime import date
 from django.contrib.admin import SimpleListFilter
 from django.db.models import Q
 
-from dizimus.apps.community.models.member_church import MemberChurch
+from dizimus.apps.community.models.member_church_model import MemberChurch
 
 
 class HasPhotoFilter(SimpleListFilter):

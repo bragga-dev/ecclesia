@@ -8,7 +8,6 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from phonenumber_field.modelfields import PhoneNumberField
@@ -64,8 +63,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         region="BR", blank=True, default="", null=False,
         help_text=_('Número de telefone no formato internacional, ex: +55 11 99999-8888.'),
     )
-
-    slug      = models.SlugField(max_length=255, unique=True, editable=False)
     is_staff  = models.BooleanField(_('Staff'), default=False)
     is_active = models.BooleanField(_('Ativo?'), default=False)
     is_trusty = models.BooleanField(_('Confiável?'), default=False)

@@ -90,7 +90,7 @@ class Church(models.Model):
 
     def refresh_total_members(self) -> None:
         # Import local evita circular import (MemberChurch → Church → MemberChurch)
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         self.total_members = (
             self.member_memberships
             .filter(status=MemberChurch.Status.ACTIVE)

@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.db.models import Count, Q
 from django.utils.html import format_html
 
-from dizimus.apps.community.models.member_church import MemberChurch
+from dizimus.apps.community.models.member_church_model import MemberChurch
 from dizimus.apps.users.models.church import Church
 from .actions import verify_churches, unverify_churches, refresh_member_counts, export_to_csv
 from .filters import ChurchVerifiedFilter, HasAsaasTokenFilter

@@ -23,14 +23,12 @@ from .member import (
 )
 from .address import (
     # Church addresses
-    get_church_addresses,
-    get_church_address_by_id,
+    
     create_church_address,
     update_church_address,
     delete_church_address,
     # Member addresses
-    get_member_addresses,
-    get_member_address_by_id,
+    
     create_member_address,
     update_member_address,
     delete_member_address,
@@ -53,14 +51,10 @@ __all__ = [
     "create_member_profile",
     "update_member_profile",
     # Address - Church
-    "get_church_addresses",
-    "get_church_address_by_id",
     "create_church_address",
     "update_church_address",
     "delete_church_address",
     # Address - Member
-    "get_member_addresses",
-    "get_member_address_by_id",
     "create_member_address",
     "update_member_address",
     "delete_member_address",

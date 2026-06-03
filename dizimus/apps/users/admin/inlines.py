@@ -4,7 +4,7 @@ Admin Inlines — formulários inline para o admin.
 from django.contrib import admin
 from dizimus.apps.users.models.church import ChurchAddress
 from dizimus.apps.users.models.member import  MemberAddress
-from dizimus.apps.community.models.member_church import  MemberChurch
+from dizimus.apps.community.models.member_church_model import  MemberChurch
 
 
 class ChurchAddressInline(admin.StackedInline):
