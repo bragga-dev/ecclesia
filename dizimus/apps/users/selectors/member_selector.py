@@ -1,14 +1,12 @@
-
 """
 Member Selectors — queries de leitura para Member e MemberAddress.
 Nenhuma escrita acontece aqui.
 """
-
 from typing import Optional
 import uuid
-from dizimus.apps.users.models.church import Church
-from dizimus.apps.users.models.member import  Member, MemberAddress
 from django.db.models import QuerySet, Q
+from dizimus.apps.users.models.member import Member, MemberAddress
+
 
 # ── Busca individual ──────────────────────────────────────────────────────────
 
@@ -91,7 +89,7 @@ def get_members_ordered_by_name() -> QuerySet[Member]:
     return Member.objects.order_by("first_name", "last_name")
 
 
-# ── Com select_related ────────────────────────────────────────────────────────
+# ── Com select_related / prefetch ─────────────────────────────────────────────
 
 def get_member_with_user(member_id: uuid.UUID) -> Optional[Member]:
     """
@@ -162,29 +160,58 @@ def get_address_by_id_and_member(
 
 # ── Search ────────────────────────────────────────────────────────────────────
 
-def search_member(query: str) -> QuerySet[Member]:
+def search_members(query: str) -> QuerySet[Member]:
     """
-    Busca membros por nome, CPF ou e-mail.
+    Busca membros por nome ou CPF.
     Case insensitive. Retorna QuerySet vazio se query for blank.
     """
     query = query.strip()
     if not query:
         return Member.objects.none()
-
     return Member.objects.filter(
         Q(first_name__icontains=query) |
         Q(last_name__icontains=query) |
         Q(cpf__icontains=query)
     ).distinct()
 
-def search_members_by_contribution(query: str, contribution_type: str) -> QuerySet[Member]:
-    """Busca membros filtrando por nome/CPF dentro de um tipo de contribuição."""
 
 def search_members_by_username(query: str) -> QuerySet[Member]:
-    Q(username__icontains=query)
+    """Busca membros por username."""
+    query = query.strip()
+    if not query:
+        return Member.objects.none()
+    return Member.objects.filter(
+        Q(username__icontains=query)
+    ).distinct()
 
-def get_members_by_birth_month(month: int) -> QuerySet[Member]:
-    Member.objects.filter(date_of_birth__month=month)
+
+def search_members_by_contribution(query: str, contribution_type: str) -> QuerySet[Member]:
+    """Busca membros por nome/CPF dentro de um tipo de contribuição específico."""
+    query = query.strip()
+    if not query:
+        return Member.objects.none()
+    return Member.objects.filter(
+        contribution_type=contribution_type
+    ).filter(
+        Q(first_name__icontains=query) |
+        Q(last_name__icontains=query) |
+        Q(cpf__icontains=query)
+    ).distinct()
+
 
 def search_members_by_city(city: str) -> QuerySet[Member]:
-    Q(addresses__city__icontains=city)
+    """Busca membros pela cidade do endereço."""
+    city = city.strip()
+    if not city:
+        return Member.objects.none()
+    return Member.objects.filter(
+        addresses__city__icontains=city
+    ).distinct()
+
+
+def get_members_by_birth_month(month: int) -> QuerySet[Member]:
+    """
+    Retorna membros aniversariantes do mês informado.
+    Ex: get_members_by_birth_month(6) → aniversariantes de junho.
+    """
+    return Member.objects.filter(date_of_birth__month=month)

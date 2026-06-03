@@ -3,10 +3,11 @@ User Selectors — queries de leitura para User.
 Nenhuma escrita acontece aqui.
 """
 import uuid
+from datetime import datetime
 from typing import Optional
 from django.db.models import QuerySet, Q
 from dizimus.apps.users.models import User
-from  datetime import datetime
+
 
 # ── Busca individual ──────────────────────────────────────────────────────────
 
@@ -95,7 +96,7 @@ def get_users_ordered_by_date(descending: bool = True) -> QuerySet[User]:
     return User.objects.order_by(order)
 
 
-# ── Combinados (uso comum em endpoints) ───────────────────────────────────────
+# ── Combinados ────────────────────────────────────────────────────────────────
 
 def get_active_users_by_role(role: str) -> QuerySet[User]:
     """Retorna usuários ativos de um role específico."""
@@ -114,14 +115,18 @@ def get_user_with_related(user_id: uuid.UUID) -> Optional[User]:
         .first()
     )
 
+
 # ── Search ────────────────────────────────────────────────────────────────────
 
 def search_users(query: str) -> QuerySet[User]:
-    """ Busca usuários por e-mail ou telefone.  """
+    """Busca usuários por e-mail ou telefone."""
     query = query.strip()
     if not query:
         return User.objects.none()
-    return User.objects.filter(Q(email__icontains=query) | Q(phone__icontains=query)).distinct()
+    return User.objects.filter(
+        Q(email__icontains=query) |
+        Q(phone__icontains=query)
+    ).distinct()
 
 
 def search_users_by_role_and_status(role: str, is_active: bool) -> QuerySet[User]:
@@ -133,16 +138,5 @@ def search_users_by_role_and_status(role: str, is_active: bool) -> QuerySet[User
 
 
 def get_users_by_date_range(start: datetime, end: datetime) -> QuerySet[User]:
-    """
-    Usuários cadastrados num período — útil pra relatórios.
-    """
-    return User.objects.filter(date_joined__date__range=(start, end))
-
-def search_users_by_role_and_status(role: str, is_active: bool) -> QuerySet[User]:
-    """Ex: todos os membros ativos, todas as igrejas inativas."""
-
-def get_users_by_date_range(start: datetime, end: datetime) -> QuerySet[User]:
     """Usuários cadastrados num período — útil pra relatórios."""
-
-def search_users(query: str) -> QuerySet[User]:
-    Q(email__icontains=query) | Q(phone__icontains=query)   
+    return User.objects.filter(date_joined__date__range=(start, end))
