@@ -6,7 +6,7 @@ import uuid
 from django.test import TestCase
 
 from dizimus.apps.users.models import Church, Member, User
-from dizimus.apps.users.selectors.profile import (
+from dizimus.apps.users.selectors.church_selector import (
     get_church_by_cnpj,
     get_member_by_cpf,
     get_church_by_user_id,
