@@ -75,7 +75,7 @@ from .church_selector import (
     get_church_with_children,
     get_church_full,
     get_addresses_by_church,
-    get_principal_address as get_church_principal_address,
+    get_church_principal_address,
     get_address_by_id as get_church_address_by_id,
     get_address_by_id_and_church,
     search_churches,

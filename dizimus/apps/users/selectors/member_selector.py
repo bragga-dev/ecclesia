@@ -215,3 +215,5 @@ def get_members_by_birth_month(month: int) -> QuerySet[Member]:
     Ex: get_members_by_birth_month(6) → aniversariantes de junho.
     """
     return Member.objects.filter(date_of_birth__month=month)
+
+

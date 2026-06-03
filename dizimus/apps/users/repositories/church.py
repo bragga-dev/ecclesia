@@ -10,7 +10,7 @@ from typing import Optional
 def create_church_profile(
     user: User,
     *,
-    full_name: str,
+    full_name: Optional[str] = None,
     cnpj: Optional[str] = None,
     instagram: Optional[str] = None,
     website: Optional[str] = None,
