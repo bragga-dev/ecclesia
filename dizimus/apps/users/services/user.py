@@ -15,16 +15,10 @@ def register_user(data: RegisterIn) -> dict:
     """
     if email_exists(data.email):
         raise UserAlreadyExists("e-mail")
-    if username_exists(data.username):
-        raise UserAlreadyExists("username")
-
     user = repositories.create_user(
         email=data.email,
         password=data.password,
-        username=data.username,
-        first_name=data.first_name,
-        last_name=data.last_name,
-        role=data.role,
+        role=data.user_label,
         phone=data.phone,
     )
 

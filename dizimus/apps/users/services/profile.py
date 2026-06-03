@@ -6,8 +6,9 @@ from dizimus.apps.users import repositories
 from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.schemas.church_schemas import ChurchUpdateIn
 from dizimus.apps.users.schemas.member_schemas import MemberUpdateIn
-from dizimus.apps.users.selectors.church_selector import get_church_by_cnpj, get_member_by_cpf
-from dizimus.apps.users.exceptions import UserAlreadyExists
+from dizimus.apps.users.selectors.church_selector import get_church_by_cnpj
+from dizimus.apps.users.selectors.member_selector import  get_member_by_cpf
+
 
 def _get_church(user: User) -> Church:
     church, _ = Church.objects.get_or_create(user=user)

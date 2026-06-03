@@ -10,14 +10,6 @@ from dizimus.apps.users.models.member import  Member, MemberAddress
 
 # ── Church addresses ──────────────────────────────────────────────────────────
 
-def get_church_addresses(church: Church):
-    return church.addresses.all().order_by("-principal", "road")
-
-
-def get_church_address_by_id(church: Church, address_id: uuid.UUID) -> Optional[ChurchAddress]:
-    return church.addresses.filter(pk=address_id).first()
-
-
 def create_church_address(church: Church, **fields) -> ChurchAddress:
     address = ChurchAddress(church=church, **fields)
     address.full_clean()
@@ -39,14 +31,6 @@ def delete_church_address(address: ChurchAddress) -> None:
 
 
 # ── Member addresses ──────────────────────────────────────────────────────────
-
-def get_member_addresses(member: Member):
-    return member.addresses.all().order_by("-principal", "road")
-
-
-def get_member_address_by_id(member: Member, address_id: uuid.UUID) -> Optional[MemberAddress]:
-    return member.addresses.filter(pk=address_id).first()
-
 
 def create_member_address(member: Member, **fields) -> MemberAddress:
     address = MemberAddress(member=member, **fields)

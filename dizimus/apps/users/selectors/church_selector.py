@@ -192,7 +192,7 @@ def get_addresses_by_church(church_id: uuid.UUID) -> QuerySet[ChurchAddress]:
     return ChurchAddress.objects.filter(church_id=church_id)
 
 
-def get_principal_address(church_id: uuid.UUID) -> Optional[ChurchAddress]:
+def get_church_principal_address(church_id: uuid.UUID) -> Optional[ChurchAddress]:
     """Retorna o endereço principal da igreja."""
     return ChurchAddress.objects.filter(church_id=church_id, principal=True).first()
 
@@ -202,12 +202,11 @@ def get_address_by_id(address_id: uuid.UUID) -> Optional[ChurchAddress]:
     return ChurchAddress.objects.filter(pk=address_id).first()
 
 
-def get_address_by_id_and_church(
-    address_id: uuid.UUID,
-    church_id: uuid.UUID,
-) -> Optional[ChurchAddress]:
+def get_address_by_id_and_church(address_id: uuid.UUID, church_id: uuid.UUID,) -> Optional[ChurchAddress]:
     """
     Busca endereço por ID garantindo que pertence à igreja.
     Use antes de qualquer update/delete de endereço.
     """
     return ChurchAddress.objects.filter(pk=address_id, church_id=church_id).first()
+
+

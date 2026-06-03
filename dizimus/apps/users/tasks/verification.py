@@ -11,7 +11,7 @@ from django.utils.http import urlsafe_base64_encode
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_verification_email(self, user_id: str) -> None:
-    from dizimus.apps.users.models import User
+    from dizimus.apps.users.models.user import User
     try:
         user = User.objects.get(pk=user_id)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -22,7 +22,7 @@ def send_verification_email(self, user_id: str) -> None:
         send_mail(
             subject="Confirme seu e-mail — DIZIMUS",
             message=(
-                f"Olá, {user.first_name}!\n\n"
+                f"Olá, {user.email}!\n\n"
                 f"Clique no link para verificar seu e-mail:\n{verify_url}\n\n"
                 "O link expira em 24 horas."
             ),
