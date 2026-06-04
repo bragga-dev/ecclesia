@@ -137,12 +137,12 @@ def get_addresses_by_member(member_id: uuid.UUID) -> QuerySet[MemberAddress]:
     return MemberAddress.objects.filter(member_id=member_id)
 
 
-def get_principal_address(member_id: uuid.UUID) -> Optional[MemberAddress]:
+def get_member_principal_address(member_id: uuid.UUID) -> Optional[MemberAddress]:
     """Retorna o endereço principal do membro."""
     return MemberAddress.objects.filter(member_id=member_id, principal=True).first()
 
 
-def get_address_by_id(address_id: uuid.UUID) -> Optional[MemberAddress]:
+def get_member_address_by_id(address_id: uuid.UUID) -> Optional[MemberAddress]:
     """Busca endereço por ID."""
     return MemberAddress.objects.filter(pk=address_id).first()
 
@@ -215,5 +215,3 @@ def get_members_by_birth_month(month: int) -> QuerySet[Member]:
     Ex: get_members_by_birth_month(6) → aniversariantes de junho.
     """
     return Member.objects.filter(date_of_birth__month=month)
-
-

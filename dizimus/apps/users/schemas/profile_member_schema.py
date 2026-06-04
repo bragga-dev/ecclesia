@@ -34,7 +34,7 @@ class MemberProfileOut(Schema):
             email=user.email,
             phone=str(user.phone) if user.phone else None,
             photo_url=user.photo_url,
-            slug=user.slug,
+            slug=member.slug,
             role=user.role,
             user_label=VALUE_TO_LABEL[user.role],
             username=member.username,

@@ -37,7 +37,7 @@ class ChurchProfileOut(Schema):
             phone=str(user.phone) if user.phone else None,
             photo_url=user.photo_url,
             slug=user.slug,
-            role=user.role,
+            role=church.role,
             user_label=VALUE_TO_LABEL[user.role],
             full_name=church.full_name,
             cnpj=church.cnpj,

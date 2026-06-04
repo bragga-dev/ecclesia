@@ -118,7 +118,6 @@ class UserOut(Schema):
     role:        UserRoleEnum
     photo_url:   str
     phone:       Optional[str]
-    slug:        str
     is_trusty:   bool
     date_joined: datetime
     created_at:  datetime

@@ -197,7 +197,7 @@ def get_church_principal_address(church_id: uuid.UUID) -> Optional[ChurchAddress
     return ChurchAddress.objects.filter(church_id=church_id, principal=True).first()
 
 
-def get_address_by_id(address_id: uuid.UUID) -> Optional[ChurchAddress]:
+def get_church_address_by_id(address_id: uuid.UUID) -> Optional[ChurchAddress]:
     """Busca endereço por ID."""
     return ChurchAddress.objects.filter(pk=address_id).first()
 

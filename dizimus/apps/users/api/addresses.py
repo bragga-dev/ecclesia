@@ -22,41 +22,37 @@ router = Router()
 # Funciona para Church e Member — o service detecta o role automaticamente.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get(
-    "/me/addresses",
-    response=List[AddressOut],
-    summary="Listar endereços",
-)
+from dizimus.apps.users.models import User
+
+@router.get("/me/addresses", response=List[AddressOut], summary="Listar endereços")
 def list_addresses(request):
-    """Retorna todos os endereços do usuário. O endereço principal aparece primeiro."""
-    return services.list_my_addresses(request.auth)
+    user: User = request.auth
+    if user.role == User.UserRole.CHURCH:
+        return services.list_church_addresses(user)
+    return services.list_member_addresses(user)
 
 
-@router.post(
-    "/me/addresses",
-    response={201: AddressOut, 422: MessageOut},
-    summary="Adicionar endereço",
-    description=(
-        "Cria um novo endereço para o usuário. "
-        "Se `principal=true`, os demais endereços são automaticamente desmarcados como principal."
-    ),
-)
+@router.post("/me/addresses", response={201: AddressOut, 422: MessageOut}, summary="Adicionar endereço")
 def create_address(request, payload: AddressIn):
+    user: User = request.auth
     try:
-        address = services.create_my_address(request.auth, payload)
+        if user.role == User.UserRole.CHURCH:
+            address = services.create_church_address_service(user, payload)
+        else:
+            address = services.create_member_address_service(user, payload)
         return 201, address
     except DjangoValidationError as e:
         return 422, {"detail": str(e.message)}
 
 
-@router.patch(
-    "/me/addresses/{address_id}",
-    response={200: AddressOut, 404: MessageOut, 422: MessageOut},
-    summary="Atualizar endereço",
-)
+@router.patch("/me/addresses/{address_id}", response={200: AddressOut, 404: MessageOut, 422: MessageOut})
 def update_address(request, address_id: uuid.UUID, payload: AddressUpdateIn):
+    user: User = request.auth
     try:
-        address = services.update_my_address(request.auth, address_id, payload)
+        if user.role == User.UserRole.CHURCH:
+            address = services.update_church_address_service(user, address_id, payload)
+        else:
+            address = services.update_member_address_service(user, address_id, payload)
         if not address:
             return 404, {"detail": "Endereço não encontrado."}
         return 200, address
@@ -64,13 +60,13 @@ def update_address(request, address_id: uuid.UUID, payload: AddressUpdateIn):
         return 422, {"detail": str(e.message)}
 
 
-@router.delete(
-    "/me/addresses/{address_id}",
-    response={200: MessageOut, 404: MessageOut},
-    summary="Remover endereço",
-)
+@router.delete("/me/addresses/{address_id}", response={200: MessageOut, 404: MessageOut})
 def delete_address(request, address_id: uuid.UUID):
-    deleted = services.delete_my_address(request.auth, address_id)
+    user: User = request.auth
+    if user.role == User.UserRole.CHURCH:
+        deleted = services.delete_church_address_service(user, address_id)
+    else:
+        deleted = services.delete_member_address_service(user, address_id)
     if not deleted:
         return 404, {"detail": "Endereço não encontrado."}
     return 200, {"detail": "Endereço removido com sucesso."}
