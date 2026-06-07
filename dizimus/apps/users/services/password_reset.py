@@ -20,14 +20,15 @@ def request_password_reset(email: str) -> None:
         return
 
     from dizimus.apps.users.tasks.password_reset import send_password_reset_email
-    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    uid = urlsafe_base64_encode(force_bytes(user.pk)).rstrip("=")
     token = default_token_generator.make_token(user)
     send_password_reset_email.delay(user.pk, uid, token)
 
 
 def confirm_password_reset(uidb64: str, token: str, new_password: str) -> None:
     try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
+        padding = (4 - len(uidb64) % 4) % 4
+        uid = force_str(urlsafe_base64_decode(uidb64 + "=" * padding))
         user = User.objects.get(pk=uid)
     except (User.DoesNotExist, ValueError, TypeError):
         raise InvalidToken()
