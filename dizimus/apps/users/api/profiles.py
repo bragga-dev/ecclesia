@@ -3,7 +3,7 @@ Users router — endpoints de perfis específicos (Church/Member) e banner.
 """
 from django.core.exceptions import ValidationError as DjangoValidationError
 from ninja import File, Router, UploadedFile
-
+from dizimus.apps.users.permissions import ChurchOnlyAuth, MemberOnlyAuth, VerifiedUserAuth
 from dizimus.apps.users import repositories, services
 from dizimus.apps.users.exceptions import UserAlreadyExists, PermissionDenied
 from dizimus.apps.users.models import User
@@ -26,6 +26,7 @@ router = Router()
 
 @router.get(
     "/me/profile",
+    auth=VerifiedUserAuth(),
     response={200: ChurchProfileOut | MemberProfileOut, 403: MessageOut},
     summary="Obter meu perfil específico",
 )
@@ -43,6 +44,7 @@ def get_my_profile(request):
 
 @router.patch(
     "/me/profile/church",
+    auth=ChurchOnlyAuth(),
     response={200: ChurchProfileOut, 403: MessageOut, 409: MessageOut, 422: MessageOut},
     summary="Atualizar perfil Igreja",
 )
@@ -61,6 +63,7 @@ def update_church_profile(request, payload: ChurchUpdateIn):
 
 @router.patch(
     "/me/profile/member",
+    auth=MemberOnlyAuth(),
     response={200: MemberProfileOut, 403: MessageOut, 409: MessageOut, 422: MessageOut},
     summary="Atualizar perfil Membro",
 )
@@ -79,6 +82,7 @@ def update_member_profile(request, payload: MemberUpdateIn):
 
 @router.post(
     "/me/banner",
+    auth=ChurchOnlyAuth(),
     response={200: ChurchProfileOut, 400: MessageOut, 403: MessageOut},
     summary="Upload de banner (somente Igreja)",
 )

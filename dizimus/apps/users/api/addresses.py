@@ -6,6 +6,8 @@ from typing import List
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from ninja import Router
+from dizimus.apps.users.permissions import require_verified, VerifiedUserAuth
+
 
 from dizimus.apps.users import services
 from dizimus.apps.users.schemas.addresses_schemas import (
@@ -15,8 +17,7 @@ from dizimus.apps.users.schemas.addresses_schemas import (
 )
 from dizimus.apps.users.schemas.users_schemas import MessageOut
 
-router = Router()
-
+router = Router(auth=VerifiedUserAuth())
 # ═══════════════════════════════════════════════════════════════════════════════
 # ENDEREÇOS
 # Funciona para Church e Member — o service detecta o role automaticamente.

@@ -3,6 +3,7 @@ from ninja_jwt.authentication import JWTAuth
 from ninja.errors import ValidationError, AuthenticationError
 from django.http import HttpRequest
 from django.http import JsonResponse
+from dizimus.apps.users.exceptions import PermissionDenied
 
 # USERS
 from dizimus.apps.users.api.auth import router as auth_router
@@ -18,9 +19,9 @@ from dizimus.apps.users.api import router as users_router
 
 
 api = NinjaAPI(
-    title="DIZIMUS API",
+    title="ECCLESIA API",
     version="1.0.0",
-    description="API para gerenciamento de dízimos.",
+    description="API para gerenciamento de Igrejas e Membros.",
     auth=JWTAuth(),
     urls_namespace="api",
     docs=Swagger(settings={
@@ -55,4 +56,13 @@ def auth_error(request: HttpRequest, exc: AuthenticationError):
     return JsonResponse(
         {"detail": "Credenciais inválidas ou token expirado."},
         status=401,
+    )
+
+
+@api.exception_handler(PermissionDenied)
+def permission_denied(request: HttpRequest, exc: PermissionDenied):
+    return api.create_response(
+        request,
+        {"detail": str(exc)},
+        status=403,
     )

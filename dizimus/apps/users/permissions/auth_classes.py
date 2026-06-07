@@ -6,24 +6,20 @@ from dizimus.apps.users.exceptions import PermissionDenied
 from .roles import is_church, is_member, is_admin, is_active, is_verified
 
 
+# auth_classes.py
 class ChurchOnlyAuth(JWTAuth):
-    """Autenticação que permite apenas Igrejas ativas."""
-    
     def authenticate(self, request, token):
         user = super().authenticate(request, token)
-        if user and not is_church(user):
+        if user and not is_admin(user) and not is_church(user):
             raise PermissionDenied("Apenas igrejas podem acessar este recurso.")
         if user and not is_active(user):
             raise PermissionDenied("Sua conta não está ativa.")
         return user
 
-
 class MemberOnlyAuth(JWTAuth):
-    """Autenticação que permite apenas Membros verificados."""
-    
     def authenticate(self, request, token):
         user = super().authenticate(request, token)
-        if user and not is_member(user):
+        if user and not is_admin(user) and not is_member(user):
             raise PermissionDenied("Apenas membros podem acessar este recurso.")
         if user and not is_verified(user):
             raise PermissionDenied("Verifique seu e-mail para acessar.")
@@ -48,13 +44,10 @@ class ActiveUserAuth(JWTAuth):
         if user and not is_active(user):
             raise PermissionDenied("Sua conta não está ativa.")
         return user
-
-
 class VerifiedUserAuth(JWTAuth):
     """Autenticação que permite apenas usuários verificados."""
-    
     def authenticate(self, request, token):
         user = super().authenticate(request, token)
-        if user and not is_verified(user):
+        if user and not is_admin(user) and not is_verified(user):
             raise PermissionDenied("Verifique seu e-mail para acessar.")
         return user
