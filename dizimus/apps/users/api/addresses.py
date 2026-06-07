@@ -60,13 +60,39 @@ def update_address(request, address_id: uuid.UUID, payload: AddressUpdateIn):
         return 422, {"detail": str(e.message)}
 
 
-@router.delete("/me/addresses/{address_id}", response={200: MessageOut, 404: MessageOut})
+@router.delete("/me/addresses/{address_id}", response={200: MessageOut, 400: MessageOut, 404: MessageOut}, summary="Deleta endereço pelo id")
 def delete_address(request, address_id: uuid.UUID):
     user: User = request.auth
+
+    # Verifica se o endereço existe antes de tentar deletar
+    from dizimus.apps.users.selectors.church_selector import get_address_by_id_and_church
+    from dizimus.apps.users.selectors.member_selector import get_address_by_id_and_member
+    from dizimus.apps.users.selectors.church_selector import get_church_by_user_id
+    from dizimus.apps.users.selectors.member_selector import get_member_by_user_id
+
     if user.role == User.UserRole.CHURCH:
+        church = get_church_by_user_id(user.id)
+        if not church or not get_address_by_id_and_church(address_id, church.id):
+            return 404, {"detail": "Endereço não encontrado."}
         deleted = services.delete_church_address_service(user, address_id)
     else:
+        member = get_member_by_user_id(user.id)
+        if not member or not get_address_by_id_and_member(address_id, member.id):
+            return 404, {"detail": "Endereço não encontrado."}
         deleted = services.delete_member_address_service(user, address_id)
+
     if not deleted:
-        return 404, {"detail": "Endereço não encontrado."}
+        return 400, {"detail": "Não é possível remover o único endereço cadastrado."}
     return 200, {"detail": "Endereço removido com sucesso."}
+
+
+@router.get("/me/addresses/{address_id}", response={200: AddressOut, 404: MessageOut}, summary="Exibe um único endereço")
+def get_addresses(request, address_id: uuid.UUID):
+    user: User = request.auth
+    if user.role == User.UserRole.CHURCH:
+        address = services.get_church_address_detail(user, address_id)
+    else:
+        address = services.get_member_address_detail(user, address_id)
+    if not address:
+        return 404, {"detail": "Endereço não encontrado."}
+    return 200, address

@@ -106,6 +106,17 @@ class Church(models.Model):
         if not old:
             return True
         return (old.full_name != self.full_name)
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        
+        if self.parent_church and self.parent_church_id == self.pk:
+            raise ValidationError("Uma igreja não pode ser pai de si mesma.")
+        
+        if self.parent_church and self.church_type == self.ChurchType.HEADQUARTERS:
+            raise ValidationError("Uma sede/matriz não pode ter igreja pai.")
+        
+        if self.parent_church and self.church_type == self.ChurchType.INDEPENDENT:
+            raise ValidationError("Uma igreja independente não pode ter igreja pai.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -116,11 +127,10 @@ class Church(models.Model):
             unique_slug = base_slug
             num = 1
             while Church.objects.filter(slug=unique_slug).exclude(pk=self.pk).exists():
-                unique_slug = f'{base_slug}-{num}'
+                unique_slug = f"{base_slug}-{num}"
                 num += 1
             self.slug = unique_slug
         super().save(*args, **kwargs)
-
 class ChurchAddress(BaseAddress):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     church = models.ForeignKey(

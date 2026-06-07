@@ -64,7 +64,7 @@ class AddressUpdateIn(Schema):
     def check_cep(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        from dizimus.apps.users.validators.validate_cpf_cnpj import validar_cep
+        from dizimus.apps.users.validators.validate_cep import validar_cep
         try:
             validar_cep(v)
         except DjangoValidationError as e:

@@ -15,8 +15,7 @@ def create_church_profile(
     instagram: Optional[str] = None,
     website: Optional[str] = None,
     about: Optional[str] = None,
-    parent_church_id: Optional[str] = None,
-    banner: Optional[str] = None,
+    
 ) -> Church:
     return Church.objects.create(
         user=user,
@@ -25,8 +24,6 @@ def create_church_profile(
         instagram=instagram,
         website=website,
         about=about,
-        parent_church_id=parent_church_id,
-        banner=banner,
     )
 
 def update_church_profile(church: Church, **fields) -> Church:

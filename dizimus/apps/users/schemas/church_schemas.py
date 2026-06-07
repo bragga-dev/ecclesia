@@ -95,9 +95,7 @@ class ChurchUpdateIn(Schema):
     instagram: Optional[str] = None
     website: Optional[str] = None
     about: Optional[str] = None
-    total_members: Optional[int] = None
-    parent_church_id: Optional[uuid.UUID] = None
-    banner_url: Optional[str] = None
+
 
     @field_validator("cnpj")
     @classmethod
