@@ -33,13 +33,11 @@ class ChurchAdmin(admin.ModelAdmin):
         "user__is_active",
     )
     search_fields = (
-        "user__first_name",
-        "user__last_name",
         "user__email",
         "cnpj",
     )
     autocomplete_fields = ("user",)
-    ordering = ("user__first_name",)
+    ordering = ("full_name",)
     list_per_page = 20
     save_on_top = True
     inlines = [ChurchAddressInline, MemberChurchInline]

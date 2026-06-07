@@ -68,7 +68,7 @@ class MembershipStatusFilter(SimpleListFilter):
     parameter_name = "membership_status"
 
     def lookups(self, request, model_admin):
-        from dizimus.apps.community.models.member_church import MemberChurch
+        from dizimus.apps.community.models.member_church_model import MemberChurch
         return MemberChurch.Status.choices
 
     def queryset(self, request, queryset):
