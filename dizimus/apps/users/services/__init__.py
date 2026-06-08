@@ -8,7 +8,7 @@ from .auth import login_user, logout_user, refresh_access_token, change_password
 from .password_reset import request_password_reset, confirm_password_reset
 
 # ── User ────────────────────────────────────────────────────────────────
-from .user import register_user, update_user_profile
+from .user import register_user
 
 # ── Profile (Member & Church) ───────────────────────────────────────────
 from .profile import update_church_profile, update_member_profile
@@ -102,7 +102,6 @@ __all__ = [
 
     # User
     "register_user",
-    "update_user_profile",
 
     # Profile
     "update_church_profile",

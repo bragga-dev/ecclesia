@@ -4,7 +4,6 @@ Toda persistência passa por aqui.
 """
 from .user import (
     create_user,
-    update_user,
     activate_user,
 )
 from .photo import (
@@ -37,7 +36,6 @@ from .address import (
 __all__ = [
     # User
     "create_user",
-    "update_user",
     "activate_user",
     # Photo
     "set_user_photo",

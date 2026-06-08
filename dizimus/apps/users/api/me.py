@@ -25,23 +25,6 @@ def get_me(request):
     return request.auth
 
 
-@router.patch(
-    "/me",
-    response={200: UserOut, 409: MessageOut},
-    summary="Atualizar dados base",
-    description=(
-        "Atualiza campos do usuário base: `username`, `first_name`, `last_name`, `phone`. "
-        "Para campos específicos do perfil (CNPJ, CPF, etc.) use `PATCH /me/profile`."
-    ),
-)
-def update_me(request, payload: UserUpdateIn):
-    try:
-        user = services.update_user_profile(request.auth, payload)
-        return 200, user
-    except UserAlreadyExists as e:
-        return 409, {"detail": str(e)}
-
-
 # ── Foto ──────────────────────────────────────────────────────────────────────
 
 @router.get(

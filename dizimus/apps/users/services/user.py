@@ -32,12 +32,3 @@ def register_user(data: RegisterIn) -> dict:
 
     from .auth import _make_tokens
     return _make_tokens(user)
-
-
-def update_user_profile(user: User, data: UserUpdateIn) -> User:
-    payload = data.model_dump(exclude_none=True)
-
-    if "username" in payload and username_exists(payload["username"], exclude_id=user.pk):
-        raise UserAlreadyExists("username")
-
-    return repositories.update_user(user, **payload)
