@@ -32,7 +32,6 @@ class MemberProfileOut(Schema):
         return cls(
             id=user.id,
             email=user.email,
-            phone=str(user.phone) if user.phone else None,
             photo_url=user.photo_url,
             slug=member.slug,
             role=user.role,
