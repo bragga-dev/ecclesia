@@ -5,7 +5,7 @@ from dizimus.apps.users.models import User
 from dizimus.apps.users import repositories
 from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.selectors import email_exists, username_exists
-from dizimus.apps.users.schemas import RegisterIn, UserUpdateIn
+from dizimus.apps.users.schemas import RegisterIn
 
 
 def register_user(data: RegisterIn) -> dict:
@@ -19,7 +19,6 @@ def register_user(data: RegisterIn) -> dict:
         email=data.email,
         password=data.password,
         role=data.user_label,
-        phone=data.phone,
     )
 
     if user.role == User.UserRole.CHURCH:

@@ -9,10 +9,6 @@ from django.core.mail import send_mail
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
-from phonenumber_field.modelfields import PhoneNumberField
-from phonenumbers import parse, format_number, PhoneNumberFormat
-
 from dizimus.apps.users.validators.validate_image_file import validate_image_file
 from dizimus.apps.users.models.constants import ROLE_ADMIN, ROLE_MEMBER, ROLE_CHURCH
 from dizimus.apps.users.models.user_manage import UserManager
@@ -59,10 +55,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=_('Formatos aceitos: jpg, jpeg ou png. Máx: 5MB.'),
     )
 
-    phone = PhoneNumberField(
-        region="BR", blank=True, default="", null=False,
-        help_text=_('Número de telefone no formato internacional, ex: +55 11 99999-8888.'),
-    )
     is_staff  = models.BooleanField(_('Staff'), default=False)
     is_active = models.BooleanField(_('Ativo?'), default=False)
     is_trusty = models.BooleanField(_('Confiável?'), default=False)
@@ -113,12 +105,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.photo.storage.url(DEFAULT_USER_PHOTO)    
     
     # ── Utilitários internos ──────────────────────────────────────────────────
-
-    @staticmethod
-    def normalize_phone(phone_str: str) -> str:
-        number = parse(phone_str, "BR")
-        return format_number(number, PhoneNumberFormat.E164)
-
 
     def save(self, *args, **kwargs):
         self.full_clean()

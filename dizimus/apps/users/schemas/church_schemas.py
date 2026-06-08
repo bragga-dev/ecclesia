@@ -39,9 +39,11 @@ class ChurchOut(Schema):
     instagram: Optional[str]
     website: Optional[str]
     about: Optional[str]
+    phone: Optional[str]
     total_members: Optional[int]
     parent_church_id: Optional[uuid.UUID]
 
+   
     @classmethod
     def from_orm(cls, church: Church) -> "ChurchOut":
         return cls(
@@ -56,6 +58,7 @@ class ChurchOut(Schema):
             instagram=church.instagram,
             website=church.website,
             about=church.about,
+            phone=str(church.phone) if church.phone else None,
             total_members=church.total_members,
             parent_church_id=church.parent_church_id,
         )
@@ -70,6 +73,7 @@ class ChurchCreateIn(Schema):
     instagram: Optional[str] = None
     website: Optional[str] = None
     about: Optional[str] = None
+    phone:Optional[str] = None
     parent_church_id: Optional[uuid.UUID] = None
 
     @field_validator("cnpj")
@@ -95,6 +99,7 @@ class ChurchUpdateIn(Schema):
     instagram: Optional[str] = None
     website: Optional[str] = None
     about: Optional[str] = None
+    phone: Optional[str] = None
 
 
     @field_validator("cnpj")

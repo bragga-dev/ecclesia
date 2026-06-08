@@ -35,9 +35,11 @@ class MemberOut(Schema):
     first_name: Optional[str]
     last_name: Optional[str]
     cpf: Optional[str]
+    phone: Optional[str]
     date_of_birth: Optional[date]
     contribution_type: ContributionTypeEnum
     contribution_label: str
+
 
     @classmethod
     def from_orm(cls, member: Member) -> "MemberOut":
@@ -48,6 +50,7 @@ class MemberOut(Schema):
             first_name=member.first_name,
             last_name=member.last_name,
             cpf=member.cpf,
+            phone=str(member.phone) if member.phone else None,
             date_of_birth=member.date_of_birth,
             contribution_type=member.contribution_type,
             contribution_label=VALUE_TO_LABEL[member.contribution_type],
@@ -60,6 +63,7 @@ class MemberCreateIn(Schema):
     first_name: str = Field(..., min_length=2, max_length=150)
     last_name: str = Field(..., min_length=2, max_length=150)
     cpf: Optional[str] = None
+    phone: Optional[str] = None
     date_of_birth: Optional[date] = None
     contribution_label: str = Field(..., description="Tipo de contribuição: 'Nenhum', 'Dizimista', 'Ofertante' ou 'Dizimista e Ofertante'.")
 
@@ -96,7 +100,8 @@ class MemberUpdateIn(Schema):
     username:   Optional[str] = Field(None, min_length=3, max_length=30)
     first_name: Optional[str] = Field(None, min_length=2, max_length=150)
     last_name:  Optional[str] = Field(None, min_length=2, max_length=150)
-    cpf:           Optional[str] = None
+    cpf:        Optional[str] = None
+    phone:      Optional[str] = None
     date_of_birth: Optional[date] = None
     contribution_label: Optional[str] = Field(None, description="Tipo de contribuição: 'Nenhum', 'Dizimista', 'Ofertante' ou 'Dizimista e Ofertante'.")
 

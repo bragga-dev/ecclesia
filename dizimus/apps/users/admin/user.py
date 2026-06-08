@@ -22,7 +22,6 @@ class UserAdmin(BaseUserAdmin):
         "avatar_thumbnail",
         "email",
         "role_badge",
-        "phone",
         "is_active_icon",
         "is_trusty",
         "is_staff",
@@ -38,7 +37,7 @@ class UserAdmin(BaseUserAdmin):
         HasPhotoFilter,
         "date_joined",
     )
-    search_fields = ("email", "first_name", "last_name", "phone")
+    search_fields = ("email",)
     ordering = ("-date_joined",)
     date_hierarchy = "date_joined"
     list_per_page = 25
@@ -56,9 +55,7 @@ class UserAdmin(BaseUserAdmin):
             "Dados pessoais",
             {
                 "fields": (
-                    ("first_name", "last_name"),
                     "role",
-                    "phone",
                     "photo",
                     "photo_preview",
                 ),

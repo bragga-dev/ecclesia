@@ -9,6 +9,8 @@ from django.utils.text import slugify
 from dizimus.apps.users.validators.validate_cpf_cnpj import validate_cpf
 from .user import User
 from .base_address import BaseAddress
+from phonenumber_field.modelfields import PhoneNumberField
+from phonenumbers import parse, format_number, PhoneNumberFormat
 
 
 class Member(models.Model):
@@ -23,6 +25,7 @@ class Member(models.Model):
     first_name = models.CharField(_('Primeiro nome'), max_length=150, blank=True, null=True, default="")
     last_name  = models.CharField(_('Sobrenome'), max_length=150, blank=True, null=True, default="")
     username = models.CharField(_('Nome de usuário'), max_length=30, unique=True, blank=True, null=True,)
+    phone = PhoneNumberField(region="BR", blank=True, default="", null=False, help_text=_('Número de telefone no formato internacional, ex: +55 11 99999-8888.'),)
     help_text=_('Obrigatório. 15 caracteres ou menos. Letras, dígitos e @/./+/-/_ apenas.'), 
     validators=[validators.RegexValidator(re.compile(r'^[\w.@+-]+$'), _('Entre com um nome de usuário válido.'), _('inválido'))]
     cpf = models.CharField(max_length=14, unique=True, null=True, blank=True, validators=[validate_cpf],  help_text=_('Formato: 000.000.000-00.'),)
@@ -40,6 +43,11 @@ class Member(models.Model):
 
     def __str__(self):
         return self.first_name or f"Membro {self.id}"
+    
+    @staticmethod
+    def normalize_phone(phone_str: str) -> str:
+        number = parse(phone_str, "BR")
+        return format_number(number, PhoneNumberFormat.E164)
 
     def clean(self):
         if self.date_of_birth and self.date_of_birth > timezone.localdate():

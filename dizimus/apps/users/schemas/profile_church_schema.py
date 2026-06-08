@@ -12,9 +12,7 @@ class ChurchProfileOut(Schema):
     # User base
     id:         uuid.UUID
     email:      str
-    phone:      Optional[str]
     photo_url:  str
-    slug:       str
     role:       str
     user_label: str
 
@@ -24,7 +22,9 @@ class ChurchProfileOut(Schema):
     instagram:     Optional[str]
     website:       Optional[str]
     about:         Optional[str]
-    church_label:  str
+    phone:         Optional[str]
+    slug:          Optional[str]
+    church_label:  Optional[str]
     total_members: Optional[int]
     is_verified:   bool
     banner_url:    str
@@ -34,7 +34,6 @@ class ChurchProfileOut(Schema):
         return cls(
             id=user.id,
             email=user.email,
-            phone=str(user.phone) if user.phone else None,
             photo_url=user.photo_url,
             slug=church.slug,
             role=user.role,
@@ -44,6 +43,7 @@ class ChurchProfileOut(Schema):
             instagram=church.instagram,
             website=church.website,
             about=church.about,
+            phone=str(church.phone) if church.phone else None,
             church_label=CHURCH_VALUE_TO_LABEL.get(church.church_type, church.church_type),
             total_members=church.total_members,
             is_verified=church.is_verified,

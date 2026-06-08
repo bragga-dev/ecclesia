@@ -6,7 +6,7 @@ from ninja import File, Router, UploadedFile
 from dizimus.apps.users.permissions.auth_classes import VerifiedUserAuth
 from dizimus.apps.users import repositories, services
 from dizimus.apps.users.exceptions import UserAlreadyExists
-from dizimus.apps.users.schemas.users_schemas import MessageOut, UserOut, UserUpdateIn
+from dizimus.apps.users.schemas.users_schemas import MessageOut, UserOut
 from dizimus.apps.users.validators.validate_image_file import validate_image_file
 
 router = Router(auth=VerifiedUserAuth())

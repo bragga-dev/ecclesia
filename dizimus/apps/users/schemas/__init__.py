@@ -10,7 +10,6 @@ from dizimus.apps.users.schemas.users_schemas import (
     PasswordResetRequestIn,
     PasswordResetConfirmIn,
     UserOut,
-    UserUpdateIn,
     MessageOut,
 )
 from dizimus.apps.users.schemas.addresses_schemas import (
@@ -42,7 +41,6 @@ __all__ = [
     "PasswordResetConfirmIn",
     # User
     "UserOut",
-    "UserUpdateIn",
     # Profile
     "ChurchProfileOut",
     "MemberProfileOut",

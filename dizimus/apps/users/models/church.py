@@ -9,7 +9,8 @@ from dizimus.apps.users.validators.validate_image_file import validate_image_fil
 from .user import User
 from .base_address import BaseAddress
 from django.utils.text import slugify
-
+from phonenumber_field.modelfields import PhoneNumberField
+from phonenumbers import parse, format_number, PhoneNumberFormat
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Upload path
@@ -37,6 +38,7 @@ class Church(models.Model):
     parent_church = models.ForeignKey("self", on_delete=models.SET_NULL,  null=True, blank=True, related_name="child_churches",)
     full_name = models.CharField(_("Nome Completo da Instituição"), max_length=255, blank=True, null=True, help_text=_('Ex: Igreja Batista da Paz.'), default="")
     is_verified = models.BooleanField(_('Autorizado?'), default=False)
+    phone = PhoneNumberField(region="BR", blank=True, default="", null=False, help_text=_('Número de telefone no formato internacional, ex: +55 11 99999-8888.'),)
     cnpj = models.CharField(max_length=18, unique=False, null=True, blank=True,  validators=[validate_cnpj], help_text=_('Formato: 00.000.000/0000-00.'),)
     asaas_token = EncryptedTextField( null=True, blank=True,  help_text=_('Token de acesso à API do Asaas.'),)
     total_members = models.PositiveIntegerField(_('Total de membros'), null=True, blank=True, default=0,)
@@ -66,6 +68,11 @@ class Church(models.Model):
 
     def __str__(self):
         return self.full_name or f"Igreja {self.id}"
+    
+    @staticmethod
+    def normalize_phone(phone_str: str) -> str:
+        number = parse(phone_str, "BR")
+        return format_number(number, PhoneNumberFormat.E164)
 
     # ── Properties ───────────────────────────────────────────────────────────
 

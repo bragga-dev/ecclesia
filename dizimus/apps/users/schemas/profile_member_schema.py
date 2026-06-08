@@ -13,9 +13,7 @@ class MemberProfileOut(Schema):
     # User base
     id:         uuid.UUID
     email:      str
-    phone:      Optional[str]
     photo_url:  str
-    slug:       str
     role:       str
     user_label: str
 
@@ -23,7 +21,9 @@ class MemberProfileOut(Schema):
     username:           Optional[str]
     first_name:         Optional[str]
     last_name:          Optional[str]
+    slug:               Optional[str]
     cpf:                Optional[str]
+    phone:              Optional[str]
     date_of_birth:      Optional[date]
     contribution_label: str
 
@@ -41,6 +41,7 @@ class MemberProfileOut(Schema):
             first_name=member.first_name,
             last_name=member.last_name,
             cpf=member.cpf,
+            phone=str(member.phone) if member.phone else None,
             date_of_birth=member.date_of_birth,
             contribution_label=MEMBER_VALUE_TO_LABEL.get(member.contribution_type, member.contribution_type),
         )

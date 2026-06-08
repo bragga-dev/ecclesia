@@ -32,8 +32,7 @@ class RegisterIn(Schema):
     email:     str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
     password:  str = Field(..., min_length=8)
     password2: str = Field(..., min_length=8)
-    user_label: str = "Membro"  # front envia label; convertido abaixo
-    phone:     Optional[str] = None
+    user_label: str = "Membro" 
 
     @field_validator("user_label")
     @classmethod
@@ -117,7 +116,6 @@ class UserOut(Schema):
     email:       str
     role:        UserRoleEnum
     photo_url:   str
-    phone:       Optional[str]
     is_trusty:   bool
     date_joined: datetime
     created_at:  datetime
@@ -128,17 +126,8 @@ class UserOut(Schema):
         return obj.photo_url
 
     @staticmethod
-    def resolve_phone(obj: User) -> Optional[str]:
-        return str(obj.phone) if obj.phone else None
-
-    @staticmethod
     def resolve_user_label(obj: User) -> str:  
         return VALUE_TO_LABEL.get(obj.role, obj.role)
-class UserUpdateIn(Schema):
-    """Atualização parcial do perfil. Todos os campos são opcionais."""
-    phone:      Optional[str] = None
-    photo:      Optional[UploadedFile] = None
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Mensagem genérica (respostas simples)
