@@ -35,14 +35,17 @@ def send_password_reset_email(self, user_id: str, uid: str, token: str) -> None:
         <html>
             <body>
                 <h2>Redefinição de senha</h2>
+
                 <p>
                     Olá, {user.email}!
                 </p>
+
                 <p>
                     Clique no botão abaixo para redefinir sua senha:
                 </p>
+
                 <p>
-                    
+                    <a
                         href="{reset_url}"
                         style="
                             background:#2563eb;
@@ -56,14 +59,18 @@ def send_password_reset_email(self, user_id: str, uid: str, token: str) -> None:
                         Redefinir senha
                     </a>
                 </p>
+
                 <p>
                     Ou copie este link:
                 </p>
+
                 <p>
                     {reset_url}
                 </p>
-                <p style="color:#6b7280; font-size:0.875rem;">
-                    O link expira em 1 hora. Se não foi você, ignore este e-mail.
+
+                <p style="color:#6b7280; font-size:14px;">
+                    O link expira em 1 hora.
+                    Se não foi você, ignore este e-mail.
                 </p>
             </body>
         </html>
