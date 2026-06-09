@@ -158,3 +158,20 @@ __all__ = [
     "MemberAddressUpdateIn"
 ]
 
+
+
+# ── Cadastro de membro por Igreja ─────────────────────────────────────────────
+
+class ChurchRegisterMemberIn(Schema):
+    """Payload para Igreja cadastrar um membro."""
+    email:      str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
+    first_name: str = Field(..., min_length=2, max_length=150)
+    last_name:  str = Field(..., min_length=2, max_length=150)
+
+
+class MemberInviteOut(Schema):
+    """Resposta após Igreja cadastrar um membro."""
+    id:    uuid.UUID
+    email: str
+    first_name: Optional[str]
+    last_name:  Optional[str]

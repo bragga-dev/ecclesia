@@ -8,6 +8,7 @@ from dizimus.apps.users.exceptions import PermissionDenied
 # USERS
 from dizimus.apps.users.api.auth import router as auth_router
 from dizimus.apps.users.api import router as users_router
+from dizimus.apps.users.api.church_members import router as church_members_router
 
 # CHURCHES
 # ajuste o import conforme a estrutura real
@@ -34,6 +35,7 @@ api = NinjaAPI(
 
 api.add_router("/auth/", auth_router, tags=["Auth"])
 api.add_router("/users/", users_router, tags=["Users"])
+api.add_router("/churches/", church_members_router, tags=["Churches"])
 
 # descomente quando confirmar os caminhos reais
 # api.add_router("/churches/", churches_router, tags=["Churches"])

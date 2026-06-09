@@ -12,6 +12,7 @@ from .user import register_user
 
 # ── Profile (Member & Church) ───────────────────────────────────────────
 from .profile import update_church_profile, update_member_profile
+from .church_member import register_member_by_church
 
 # # ── Church services ─────────────────────────────────────────────────────
 # from dizimus.apps.users.services.church.church_service import (
@@ -106,6 +107,7 @@ __all__ = [
     # Profile
     "update_church_profile",
     "update_member_profile",
+    "register_member_by_church",
 
     # # Church
     # "create_church_profile_service",

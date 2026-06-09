@@ -1,0 +1,44 @@
+"""
+Church Members router — Igreja cadastra seus membros.
+"""
+from ninja import Router
+from dizimus.apps.users.permissions import ChurchOnlyAuth
+from dizimus.apps.users.models import User
+from dizimus.apps.users.exceptions import UserAlreadyExists
+from dizimus.apps.users.schemas.member_schemas import ChurchRegisterMemberIn, MemberInviteOut
+from dizimus.apps.users.schemas.users_schemas import MessageOut
+from dizimus.apps.users.services.church_member import register_member_by_church
+
+router = Router(tags=["Churches"])
+
+
+@router.post(
+    "/members",
+    auth=ChurchOnlyAuth(),
+    response={201: MemberInviteOut, 409: MessageOut},
+    summary="Igreja cadastra um membro",
+    description=(
+        "Apenas a Igreja autenticada pode cadastrar membros. "
+        "O membro recebe um e-mail com senha temporária e link de verificação."
+    ),
+)
+def church_register_member(request, payload: ChurchRegisterMemberIn):
+    user: User = request.auth
+    church = user.church
+
+    try:
+        member = register_member_by_church(
+            church=church,
+            email=payload.email,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+        )
+    except UserAlreadyExists as e:
+        return 409, {"detail": str(e)}
+
+    return 201, MemberInviteOut(
+        id=member.user.id,
+        email=member.user.email,
+        first_name=member.first_name,
+        last_name=member.last_name,
+    )
