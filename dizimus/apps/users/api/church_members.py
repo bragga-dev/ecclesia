@@ -8,6 +8,7 @@ from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.schemas.member_schemas import ChurchRegisterMemberIn, MemberInviteOut
 from dizimus.apps.users.schemas.users_schemas import MessageOut
 from dizimus.apps.users.services.church_member import register_member_by_church
+from django_ratelimit.decorators import ratelimit
 
 router = Router(tags=["Churches"])
 
@@ -22,6 +23,7 @@ router = Router(tags=["Churches"])
         "O membro recebe um e-mail com senha temporária e link de verificação."
     ),
 )
+@ratelimit(key="user", rate="30/m", block=True,)
 def church_register_member(request, payload: ChurchRegisterMemberIn):
     user: User = request.auth
     church = user.church

@@ -16,6 +16,7 @@ from dizimus.apps.users.schemas.addresses_schemas import (
     AddressUpdateIn,
 )
 from dizimus.apps.users.schemas.users_schemas import MessageOut
+from django_ratelimit.decorators import ratelimit
 
 router = Router(auth=VerifiedUserAuth())
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -34,6 +35,7 @@ def list_addresses(request):
 
 
 @router.post("/me/addresses", response={201: AddressOut, 422: MessageOut}, summary="Adicionar endereço")
+@ratelimit(key="user", rate="20/h",  block=True,)
 def create_address(request, payload: AddressIn):
     user: User = request.auth
     try:
@@ -47,6 +49,7 @@ def create_address(request, payload: AddressIn):
 
 
 @router.patch("/me/addresses/{address_id}", response={200: AddressOut, 404: MessageOut, 422: MessageOut})
+@ratelimit(key="user", rate="60/h",  block=True,)
 def update_address(request, address_id: uuid.UUID, payload: AddressUpdateIn):
     user: User = request.auth
     try:
@@ -62,6 +65,7 @@ def update_address(request, address_id: uuid.UUID, payload: AddressUpdateIn):
 
 
 @router.delete("/me/addresses/{address_id}", response={200: MessageOut, 400: MessageOut, 404: MessageOut}, summary="Deleta endereço pelo id")
+@ratelimit(key="user", rate="10/h",  block=True,)
 def delete_address(request, address_id: uuid.UUID):
     user: User = request.auth
 

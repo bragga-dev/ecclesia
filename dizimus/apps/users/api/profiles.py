@@ -14,7 +14,7 @@ from dizimus.apps.users.schemas.profile_member_schema import MemberProfileOut
 from dizimus.apps.users.schemas.addresses_schemas import (
     AddressIn, AddressUpdateIn, AddressOut,
 )
-
+from django_ratelimit.decorators import ratelimit
 from dizimus.apps.users.schemas.users_schemas import MessageOut
 from dizimus.apps.users.validators.validate_image_file import validate_image_file
 
@@ -24,10 +24,7 @@ router = Router()
 # PERFIL ESPECÍFICO (Church | Member)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get(
-    "/me/profile",
-    auth=VerifiedUserAuth(),
-    response={200: ChurchProfileOut | MemberProfileOut, 403: MessageOut},
+@router.get( "/me/profile", auth=VerifiedUserAuth(), response={200: ChurchProfileOut | MemberProfileOut, 403: MessageOut},
     summary="Obter meu perfil específico",
 )
 def get_my_profile(request):
@@ -42,12 +39,10 @@ def get_my_profile(request):
     return 403, {"detail": "Administradores não possuem perfil público."}
 
 
-@router.patch(
-    "/me/profile/church",
-    auth=ChurchOnlyAuth(),
-    response={200: ChurchProfileOut, 403: MessageOut, 409: MessageOut, 422: MessageOut},
+@router.patch("/me/profile/church", auth=ChurchOnlyAuth(), response={200: ChurchProfileOut, 403: MessageOut, 409: MessageOut, 422: MessageOut},
     summary="Atualizar perfil Igreja",
 )
+@ratelimit(key="user", rate="30/h", block=True,)
 def update_church_profile(request, payload: ChurchUpdateIn):
     user: User = request.auth
     if user.role != User.UserRole.CHURCH:
@@ -61,12 +56,10 @@ def update_church_profile(request, payload: ChurchUpdateIn):
         return 422, {"detail": str(e.message)}
 
 
-@router.patch(
-    "/me/profile/member",
-    auth=MemberOnlyAuth(),
-    response={200: MemberProfileOut, 403: MessageOut, 409: MessageOut, 422: MessageOut},
+@router.patch("/me/profile/member", auth=MemberOnlyAuth(), response={200: MemberProfileOut, 403: MessageOut, 409: MessageOut, 422: MessageOut},
     summary="Atualizar perfil Membro",
 )
+@ratelimit(key="user", rate="30/h", block=True,)
 def update_member_profile(request, payload: MemberUpdateIn):
     user: User = request.auth
     if user.role != User.UserRole.MEMBER:
@@ -80,12 +73,10 @@ def update_member_profile(request, payload: MemberUpdateIn):
         return 422, {"detail": str(e.message)}
 
 
-@router.post(
-    "/me/banner",
-    auth=ChurchOnlyAuth(),
-    response={200: ChurchProfileOut, 400: MessageOut, 403: MessageOut},
+@router.post("/me/banner", auth=ChurchOnlyAuth(), response={200: ChurchProfileOut, 400: MessageOut, 403: MessageOut},
     summary="Upload de banner (somente Igreja)",
 )
+@ratelimit(key="user", rate="10/h", block=True,)
 def upload_banner(request, banner: UploadedFile = File(...)):
     user: User = request.auth
     if user.role != User.UserRole.CHURCH:

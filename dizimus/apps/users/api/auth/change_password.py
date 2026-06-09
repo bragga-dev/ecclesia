@@ -9,16 +9,13 @@ from dizimus.apps.users.schemas.users_schemas import (
     MessageOut,
 )
 from dizimus.apps.users.exceptions import InvalidPassword
+from django_ratelimit.decorators import ratelimit
 
 router = Router()
 
 
-@router.post(
-    "/change-password",
-    response={200: MessageOut, 400: MessageOut},
-    auth=JWTAuth(),
-    summary="Alterar senha",
-)
+@router.post("/change-password", response={200: MessageOut, 400: MessageOut}, auth=JWTAuth(), summary="Alterar senha",)
+@ratelimit(key="user", rate="5/h",  block=True,)
 def change_password(request, payload: ChangePasswordIn):
     try:
         services.change_password(

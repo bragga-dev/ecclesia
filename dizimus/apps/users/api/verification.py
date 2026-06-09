@@ -7,16 +7,15 @@ from django.conf import settings
 from dizimus.apps.users.schemas.users_schemas import MessageOut 
 from dizimus.apps.users.services.verification import verify_email
 from dizimus.apps.users.exceptions import InvalidToken
+from django_ratelimit.decorators import ratelimit
 
 router = Router()
 
 
-@router.get(
-    "/verify-email/{uidb64}/{token}",
-    summary="Confirmar e-mail",
-    description="Confirma o email e redireciona para o frontend.",
+@router.get("/verify-email/{uidb64}/{token}", summary="Confirmar e-mail",  description="Confirma o email e redireciona para o frontend.",
     auth=None,
 )
+@ratelimit( key="ip", rate="20/h", block=True,)
 def verify_email_endpoint(request, uidb64: str, token: str):
     """
     Confirma o email e redireciona para o frontend.
@@ -31,12 +30,10 @@ def verify_email_endpoint(request, uidb64: str, token: str):
         redirect_url = f"{settings.FRONTEND_URL}/verificacao-concluida?status=error&message={str(e)}"
         return HttpResponseRedirect(redirect_url)
     
-@router.post(
-    "/resend-verification",
-    response={200: MessageOut, 404: MessageOut},
-    summary="Reenviar email de verificação",
+@router.post("/resend-verification", response={200: MessageOut, 404: MessageOut}, summary="Reenviar email de verificação",
     auth=None,  # Ou com auth se quiser proteger
 )
+@ratelimit(key="ip", rate="3/h", block=True,)
 def resend_verification_email(request, email: str):
     """
     Reenvia o email de verificação para um usuário não verificado.

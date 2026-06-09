@@ -8,6 +8,7 @@ from dizimus.apps.users import repositories, services
 from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.schemas.users_schemas import MessageOut, UserOut
 from dizimus.apps.users.validators.validate_image_file import validate_image_file
+from django_ratelimit.decorators import ratelimit
 
 router = Router(auth=VerifiedUserAuth())
 
@@ -15,11 +16,7 @@ router = Router(auth=VerifiedUserAuth())
 # PERFIL BASE (User)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get(
-    "/me",
-    response=UserOut,
-    summary="Meu perfil",
-)
+@router.get("/me", response=UserOut, summary="Meu perfil",)
 def get_me(request):
     """Retorna os dados do usuário autenticado."""
     return request.auth
@@ -27,21 +24,14 @@ def get_me(request):
 
 # ── Foto ──────────────────────────────────────────────────────────────────────
 
-@router.get(
-    "/me/photo",
-    response={200: UserOut},
-    summary="Ver foto de perfil",
-)
+@router.get("/me/photo", response={200: UserOut}, summary="Ver foto de perfil",)
 def get_photo(request):
     """Retorna o usuário com a URL da foto atual."""
     return 200, request.auth
 
 
-@router.post(
-    "/me/photo",
-    response={200: UserOut, 400: MessageOut},
-    summary="Upload de foto de perfil",
-)
+@router.post("/me/photo", response={200: UserOut, 400: MessageOut}, summary="Upload de foto de perfil",)
+@ratelimit(key="user", rate="20/h", block=True,)
 def upload_photo(request, photo: UploadedFile = File(...)):
     """Adiciona ou substitui a foto. Formatos: jpg, jpeg, png, webp. Máx: 5 MB."""
     try:
@@ -52,11 +42,8 @@ def upload_photo(request, photo: UploadedFile = File(...)):
     return 200, user
 
 
-@router.patch(
-    "/me/photo",
-    response={200: UserOut, 400: MessageOut},
-    summary="Atualizar foto de perfil",
-)
+@router.patch("/me/photo", response={200: UserOut, 400: MessageOut}, summary="Atualizar foto de perfil",)
+@ratelimit(key="user", rate="30/h", block=True,)
 def update_photo(request, photo: UploadedFile = File(...)):
     """Substitui a foto existente. Formatos: jpg, jpeg, png, webp. Máx: 5 MB."""
     try:
@@ -67,11 +54,8 @@ def update_photo(request, photo: UploadedFile = File(...)):
     return 200, user
 
 
-@router.delete(
-    "/me/photo",
-    response={200: MessageOut},
-    summary="Remover foto de perfil",
-)
+@router.delete("/me/photo",  response={200: MessageOut}, summary="Remover foto de perfil",)
+@ratelimit(key="user", rate="20/h", block=True,)
 def remove_photo(request):
     """Restaura a imagem padrão."""
     repositories.remove_user_photo(request.auth)

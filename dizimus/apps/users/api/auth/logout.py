@@ -9,16 +9,12 @@ from dizimus.apps.users.schemas.users_schemas import (
     MessageOut,
 )
 from dizimus.apps.users.exceptions import InvalidToken
-
+from django_ratelimit.decorators import ratelimit
 router = Router()
 
 
-@router.post(
-    "/logout",
-    response={200: MessageOut, 401: MessageOut},
-    auth=JWTAuth(),
-    summary="Logout (blacklista o refresh token)",
-)
+@router.post("/logout", response={200: MessageOut, 401: MessageOut},  auth=JWTAuth(), summary="Logout (blacklista o refresh token)",)
+@ratelimit(key="user", rate="30/m", block=True)
 def logout(request, payload: RefreshIn):
     try:
         services.logout_user(payload.refresh)

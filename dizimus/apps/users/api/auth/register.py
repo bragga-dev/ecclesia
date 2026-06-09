@@ -9,16 +9,12 @@ from dizimus.apps.users.schemas.users_schemas import (
     MessageOut,
 )
 from dizimus.apps.users.exceptions import UserAlreadyExists
-
+from django_ratelimit.decorators import ratelimit
 router = Router()
 
 
-@router.post(
-    "/register",
-    response={201: TokenOut, 409: MessageOut},
-    auth=None,
-    summary="Cadastro de Igreja ou Membro",
-)
+@router.post("/register", response={201: TokenOut, 409: MessageOut}, auth=None, summary="Cadastro de Igreja ou Membro",)
+@ratelimit(key="ip", rate="5/h", block=True,)
 def register(request, payload: RegisterIn):
     """
     Cria o usuário, o perfil (Church ou Member) e retorna tokens JWT.

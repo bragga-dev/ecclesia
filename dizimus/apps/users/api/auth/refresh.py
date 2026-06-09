@@ -8,16 +8,12 @@ from dizimus.apps.users.schemas.users_schemas import (
     MessageOut,
 )
 from dizimus.apps.users.exceptions import InvalidToken
-
+from django_ratelimit.decorators import ratelimit
 router = Router()
 
 
-@router.post(
-    "/refresh",
-    response={200: dict, 401: MessageOut},
-    auth=None,
-    summary="Renovar access token",
-)
+@router.post("/refresh", response={200: dict, 401: MessageOut}, auth=None, summary="Renovar access token",)
+@ratelimit(key="ip", rate="30/m",  block=True,)
 def refresh(request, payload: RefreshIn):
     try:
         data = services.refresh_access_token(payload.refresh)
