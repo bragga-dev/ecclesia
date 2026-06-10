@@ -1,7 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 import environ
-
+from colorlog import ColoredFormatter
 
 # =========================================================
 # BASE
@@ -256,37 +256,54 @@ LOGGING = {
             ),
             "style": "{",
         },
+        # <--- NOVO FORMATTER COLORIDO AQUI --->
+        "colorized": {
+            "()": ColoredFormatter,  # Diz ao Django para usar esta classe
+            "format": "%(log_color)s[{asctime}] %(levelname)-8s %(name)s %(reset)s %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "log_colors": {
+                'DEBUG':    'cyan',
+                'INFO':     'green',
+                'WARNING':  'yellow',
+                'ERROR':    'red',
+                'CRITICAL': 'red,bg_white',
+            },
+            "style": '%' # O colorlog tradicionalmente usa o estilo de formatação % 
+        },
+        # <--- FIM DO NOVO FORMATTER --->
     },
 
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            # MUDE AQUI: de "formatter": "verbose" para "formatter": "colorized"
+            "formatter": "colorized", 
         },
 
         "file": {
             "class": "logging.FileHandler",
             "filename": BASE_DIR / "logs/django.log",
-            "formatter": "verbose",
+            # O arquivo continua sem cores, usando o formatador "verbose"
+            "formatter": "verbose", 
         },
     },
-
     "root": {
-        "handlers": [
-            "console",
-            "file",
-        ],
-        "level": "INFO",
-    },
-
-    "loggers": {
-        "django.core.mail": {
-            "handlers": ["console"],
+            "handlers": [
+                "console",
+                "file",
+            ],
             "level": "INFO",
-            "propagate": False,
+        },
+
+        "loggers": {
+            "django.core.mail": {
+                "handlers": ["console"],
+                "level": "INFO",
+                "propagate": False,
+            }
         }
+    
     }
-}
 
 
 # =========================================================

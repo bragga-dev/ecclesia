@@ -8,6 +8,9 @@ from dizimus.apps.users.selectors import email_exists
 from dizimus.apps.users.schemas import RegisterIn
 from django.db import transaction
 from ninja_jwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+from django.db import transaction
+from django.utils import timezone
+from dizimus.apps.users.models.audit_user_model import AuditLog 
 
 
 def register_user(data: RegisterIn) -> dict:
@@ -36,8 +39,21 @@ def register_user(data: RegisterIn) -> dict:
 
 
 @transaction.atomic
-def deactivate_account(user):
+def deactivate_account(user, performed_by=None, reason="Desativação de conta"):
+    """ Desativa usuário, revoga todos os tokens ativos e cria logger de auditória"""
     for token in OutstandingToken.objects.filter(user=user):
         BlacklistedToken.objects.get_or_create(token=token)
-    user.is_active=False
+    user.is_active = False
     user.save(update_fields=["is_active"])
+    AuditLog.objects.create(
+        action="DEACTIVATE_ACCOUNT",
+        user=user,
+        performed_by=performed_by,  
+        reason=reason,
+        timestamp=timezone.now(),
+        details={
+            "tokens_revoked": True,
+            "user_id": str(user.id),
+            "email": user.email,
+        }
+    )

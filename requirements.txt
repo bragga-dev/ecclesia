@@ -18,12 +18,14 @@ click==8.3.3
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
+colorlog==6.10.1
 contextlib2==21.6.0
 cryptography==48.0.0
 cssselect2==0.9.0
 Django==6.0.5
 django-cleanup==9.0.0
 django-cors-headers==4.9.0
+django-encrypted-model-fields==0.6.5
 django-environ==0.13.0
 django-extensions==4.1
 django-ninja==1.6.2
@@ -80,4 +82,3 @@ webencodings==0.5.1
 whitenoise==6.12.0
 yarl==1.23.0
 zopfli==0.4.1
-django-encrypted-model-fields==0.6.5

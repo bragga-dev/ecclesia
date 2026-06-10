@@ -27,6 +27,7 @@ VALUE_TO_LABEL = {v: k for k, v in LABEL_TO_VALUE.items()}
 class UserRoleEnum(str, Enum):
     MEMBER = "member"
     CHURCH = "church"
+    ADMIN =  "admin"
 
 class RegisterIn(Schema):
     email:     str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')

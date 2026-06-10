@@ -87,3 +87,5 @@ def upload_banner(request, banner: UploadedFile = File(...)):
         return 400, {"detail": str(e.message)}
     church = repositories.set_church_banner(user.church, banner)
     return 200, ChurchProfileOut.from_orm(user, church)  # ← também precisava
+
+

@@ -7,6 +7,7 @@ from .user import User, user_photo_path, DEFAULT_USER_PHOTO
 from .base_address import BaseAddress
 from .member import Member, MemberAddress
 from .church import Church, ChurchAddress, church_banner_path, DEFAULT_CHURCH_BANNER
+from .audit_user_model import AuditLog
 
 __all__ = [
     # Constantes
@@ -19,6 +20,7 @@ __all__ = [
     "User",
     "user_photo_path",
     "DEFAULT_USER_PHOTO",
+    "AuditLog",
     # Address base
     "BaseAddress",
     # Member
