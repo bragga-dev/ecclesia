@@ -9,6 +9,10 @@ from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.schemas.users_schemas import MessageOut, UserOut
 from dizimus.apps.users.validators.validate_image_file import validate_image_file
 from django_ratelimit.decorators import ratelimit
+from django.shortcuts import get_object_or_404
+from dizimus.apps.community.models.member_church_model import MemberChurch
+from dizimus.apps.users.schemas.profile_church_schema import MemberChurchOut
+
 
 router = Router(auth=VerifiedUserAuth())
 
@@ -60,3 +64,18 @@ def remove_photo(request):
     """Restaura a imagem padrão."""
     repositories.remove_user_photo(request.auth)
     return 200, {"detail": "Foto removida com sucesso."}
+
+
+@router.delete("/me", response={204: None}, summary="Usuário deleta sua própria conta")
+def delete_me(request):
+    services.deactivate_account(request.auth)
+    return 204, None
+
+@router.get("/me/church", response=MemberChurchOut, summary="Retorna informações da igreja a qual o membro é vinculado")
+@ratelimit(key="user", rate="100/h", block=True)
+def get_my_church(request):
+    membership = get_object_or_404(MemberChurch.objects.select_related("church__user"),
+        member__user=request.auth,
+        status=MemberChurch.Status.ACTIVE,
+    )
+    return MemberChurchOut.from_orm(membership.church)

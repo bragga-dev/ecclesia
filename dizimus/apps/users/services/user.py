@@ -4,8 +4,10 @@ User Services — criação e atualização de usuário base.
 from dizimus.apps.users.models import User
 from dizimus.apps.users import repositories
 from dizimus.apps.users.exceptions import UserAlreadyExists
-from dizimus.apps.users.selectors import email_exists, username_exists
+from dizimus.apps.users.selectors import email_exists
 from dizimus.apps.users.schemas import RegisterIn
+from django.db import transaction
+from ninja_jwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
 
 def register_user(data: RegisterIn) -> dict:
@@ -31,3 +33,11 @@ def register_user(data: RegisterIn) -> dict:
 
     from .auth import _make_tokens
     return _make_tokens(user)
+
+
+@transaction.atomic
+def deactivate_account(user):
+    for token in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=token)
+    user.is_active=False
+    user.save(update_fields=["is_active"])

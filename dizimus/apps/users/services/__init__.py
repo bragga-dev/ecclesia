@@ -92,6 +92,10 @@ from dizimus.apps.users.services.member.member_address_service import (
     delete_member_address_service,
 )
 
+
+from dizimus.apps.users.services.user import deactivate_account
+
+
 __all__ = [
     # Auth
     "login_user",
@@ -103,6 +107,7 @@ __all__ = [
 
     # User
     "register_user",
+    "deactivate_account"
 
     # Profile
     "update_church_profile",

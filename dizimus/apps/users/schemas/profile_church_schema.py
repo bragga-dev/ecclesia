@@ -12,7 +12,7 @@ class ChurchProfileOut(Schema):
     # User base
     id:         uuid.UUID
     email:      str
-    photo_url:  str
+    photo_url:  Optional[str] = None
     role:       str
     user_label: str
 
@@ -24,17 +24,17 @@ class ChurchProfileOut(Schema):
     about:         Optional[str]
     phone:         Optional[str]
     slug:          Optional[str]
-    church_label:  Optional[str]
+    church_label:  Optional[str] = None
     total_members: Optional[int]
     is_verified:   bool
-    banner_url:    str
+    banner_url:    Optional[str] = None
 
     @classmethod
     def from_orm(cls, user: User, church: Church) -> "ChurchProfileOut":
         return cls(
             id=user.id,
             email=user.email,
-            photo_url=user.photo_url,
+            photo_url=getattr(user, "photo_url", None),
             slug=church.slug,
             role=user.role,
             user_label=VALUE_TO_LABEL[user.role],
@@ -47,5 +47,18 @@ class ChurchProfileOut(Schema):
             church_label=CHURCH_VALUE_TO_LABEL.get(church.church_type, church.church_type),
             total_members=church.total_members,
             is_verified=church.is_verified,
-            banner_url=church.banner_url,
+            banner_url=getattr(church, "banner_url", None),
         )
+
+
+class MemberChurchOut(Schema):
+    id: uuid.UUID
+    photo_url: Optional[str] = None
+    full_name: Optional[str]
+    slug: Optional[str]
+    instagram: Optional[str]
+    website: Optional[str]
+    about: Optional[str]
+    church_label: Optional[str] = None
+    total_members: Optional[int]
+    banner_url: Optional[str] = None

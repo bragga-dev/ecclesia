@@ -22,7 +22,7 @@ def password_reset_request(request, payload: PasswordResetRequestIn):
 
 
 @router.post("/password-reset/confirm", response={200: MessageOut, 400: MessageOut},  auth=None, summary="Confirmar reset de senha",)
-@ratelimit(key="ip", rate="10",  block=True,)
+@ratelimit(key="ip", rate="10/h",  block=True,)
 def password_reset_confirm(request, payload: PasswordResetConfirmIn):
     try:
         services.confirm_password_reset(
