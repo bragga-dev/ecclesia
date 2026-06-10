@@ -148,17 +148,6 @@ class MemberAddressOut(AddressOut):
     member_id: uuid.UUID
 
 
-__all__ = [
-    "MemberOut",
-    "MemberCreateIn",
-    "MemberUpdateIn",
-    "MemberAddressIn",
-    "MemberAddressOut",
-    "ContributionTypeEnum",
-    "MemberAddressUpdateIn"
-]
-
-
 
 # ── Cadastro de membro por Igreja ─────────────────────────────────────────────
 
@@ -167,6 +156,7 @@ class ChurchRegisterMemberIn(Schema):
     email:      str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
     first_name: str = Field(..., min_length=2, max_length=150)
     last_name:  str = Field(..., min_length=2, max_length=150)
+    
 
 
 class MemberInviteOut(Schema):
@@ -175,3 +165,54 @@ class MemberInviteOut(Schema):
     email: str
     first_name: Optional[str]
     last_name:  Optional[str]
+
+
+# ── Listagem de membros pela Igreja ──────────────────────────────────────────
+class MemberChurchRoleEnum(str, Enum):
+    MEMBER       = "member"
+    PASTOR       = "pastor/padre"
+    TREASURER    = "tesoureiro"
+    SECRETARY    = "secretário"
+    CHURCH_ADMIN = "admin"
+
+class MemberChurchStatusEnum(str, Enum):
+    ACTIVE   = "active"
+    INACTIVE = "inactive"
+    PENDING  = "pending"
+class ChurchMemberListOut(Schema):
+    """Membro na listagem da igreja."""
+    id:         uuid.UUID
+    email:      str
+    first_name: Optional[str]
+    last_name:  Optional[str]
+    phone:      Optional[str]
+    role:       MemberChurchRoleEnum 
+    status:     MemberChurchStatusEnum 
+    status:     str
+    joined_at:  str
+
+    @classmethod
+    def from_membership(cls, membership) -> "ChurchMemberListOut":
+        member = membership.member
+        return cls(
+            id=member.user.id,
+            email=member.user.email,
+            first_name=member.first_name,
+            last_name=member.last_name,
+            phone=str(member.phone) if member.phone else None,
+            role=membership.role,
+            status=membership.status,
+            joined_at=membership.joined_at.isoformat(),
+        )
+    
+
+__all__ = [
+    "MemberOut",
+    "MemberCreateIn",
+    "MemberUpdateIn",
+    "MemberAddressIn",
+    "MemberAddressOut",
+    "ContributionTypeEnum",
+    "MemberAddressUpdateIn",
+    "ChurchMemberListOut"
+]

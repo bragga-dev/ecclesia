@@ -125,3 +125,14 @@ MEDIA_URL = (
 )
 
 MINIO_URL_PROTOCOL = "http:"
+
+
+# =========================================================
+# JWT
+# =========================================================
+NINJA_JWT = {
+    # ── Tempo de vida dos tokens ──────────────────────────────────────────
+    "ACCESS_TOKEN_LIFETIME":  timedelta(hours=90),  
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=100),
+
+}

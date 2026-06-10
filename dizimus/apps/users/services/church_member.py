@@ -6,14 +6,13 @@ import string
 
 from dizimus.apps.users.models import User, Church, Member
 from dizimus.apps.users import repositories
-from dizimus.apps.users.exceptions import UserAlreadyExists, PermissionDenied
+from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.selectors import email_exists
 
 
 def _generate_temp_password(length: int = 12) -> str:
     """Gera senha temporária segura: letras + dígitos + símbolos."""
     alphabet = string.ascii_letters + string.digits + "!@#$%"
-    # Garante pelo menos um de cada categoria
     pwd = [
         secrets.choice(string.ascii_uppercase),
         secrets.choice(string.ascii_lowercase),
@@ -25,13 +24,18 @@ def _generate_temp_password(length: int = 12) -> str:
     return "".join(pwd)
 
 
-def register_member_by_church(church: Church, email: str, first_name: str, last_name: str) -> Member:
+def register_member_by_church(
+    church: Church,
+    email: str,
+    first_name: str,
+    last_name: str,
+) -> Member:
     """
     Igreja cadastra um membro:
-    1. Valida que a igreja existe e é verificada
-    2. Cria User com role=member, senha temporária, is_active=False
-    3. Cria Member com first_name e last_name
-    4. Dispara e-mail de boas-vindas com senha temporária e link de verificação
+    1. Cria User com role=member e senha temporária
+    2. Cria Member com first_name e last_name
+    3. Cria MemberChurch vinculando membro à igreja (status=PENDING)
+    4. Dispara e-mail com senha temporária e link de verificação
     """
     if email_exists(email):
         raise UserAlreadyExists("e-mail")
@@ -48,6 +52,15 @@ def register_member_by_church(church: Church, email: str, first_name: str, last_
         user,
         first_name=first_name,
         last_name=last_name,
+    )
+
+    # Cria o vínculo com a igreja que está cadastrando
+    from dizimus.apps.community.models.member_church_model import MemberChurch
+    MemberChurch.objects.create(
+        member=user.member,
+        church=church,
+        role=MemberChurch.Role.MEMBER,
+        status=MemberChurch.Status.ACTIVE,
     )
 
     from dizimus.apps.users.tasks.member_invite import send_member_invite_email

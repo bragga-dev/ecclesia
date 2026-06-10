@@ -3,7 +3,7 @@ Auth Services — autenticação, login, logout, refresh token.
 """
 from django.contrib.auth import authenticate
 from ninja_jwt.tokens import RefreshToken
-from dizimus.apps.users.selectors import get_user_by_email
+from ninja_jwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from dizimus.apps.users.models import User
 from dizimus.apps.users.exceptions import (
     InvalidCredentials,
@@ -38,11 +38,24 @@ def refresh_access_token(refresh_token: str) -> dict:
         raise InvalidToken()
 
 
-def change_password(user: User, old_password: str, new_password: str) -> None:
+def change_password(user: User, old_password: str, new_password: str) -> dict:
+    """
+    Troca a senha e invalida todos os refresh tokens ativos do usuário.
+    Retorna um novo par de tokens para manter a sessão ativa.
+    """
     if not user.check_password(old_password):
         raise InvalidPassword()
+
     user.set_password(new_password)
     user.save(update_fields=["password"])
+
+    # Blacklista todos os refresh tokens ativos deste usuário
+    outstanding = OutstandingToken.objects.filter(user=user)
+    for token in outstanding:
+        BlacklistedToken.objects.get_or_create(token=token)
+
+    # Retorna novo par de tokens
+    return _make_tokens(user)
 
 
 def _make_tokens(user: User) -> dict:

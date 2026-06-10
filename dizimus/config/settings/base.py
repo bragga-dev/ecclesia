@@ -319,10 +319,6 @@ DEFAULT_REPLY_TO_EMAIL = env("DEFAULT_REPLY_TO_EMAIL", default=DEFAULT_FROM_EMAI
 # JWT
 # =========================================================
 NINJA_JWT = {
-    # ── Tempo de vida dos tokens ──────────────────────────────────────────
-    "ACCESS_TOKEN_LIFETIME":  timedelta(hours=90),  
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=100),
-
     # ── Rotação de refresh ────────────────────────────────────────────────
     # A cada uso do refresh, um novo é gerado e o anterior é invalidado
     "ROTATE_REFRESH_TOKENS":    True,  # exige ninja_jwt.token_blacklist
