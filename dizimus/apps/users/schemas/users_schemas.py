@@ -118,6 +118,7 @@ class UserOut(Schema):
     role:        UserRoleEnum
     photo_url:   str
     is_trusty:   bool
+    is_active:   bool
     date_joined: datetime
     created_at:  datetime
     user_label:  str

@@ -12,3 +12,6 @@ router = Router()
 router.add_router("/churches/", churches_router)
 router.add_router("/users/", users_router)
 router.add_router("/members/", members_router)
+
+
+

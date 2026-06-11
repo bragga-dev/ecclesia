@@ -31,6 +31,7 @@ class ChurchOut(Schema):
     id: uuid.UUID
     user: UserOut
     is_verified: bool
+    is_active: bool
     cnpj: Optional[str]
     banner_url: Optional[str]
     church_type: ChurchTypeEnum
@@ -50,6 +51,7 @@ class ChurchOut(Schema):
             id=church.id,
             user=UserOut.from_orm(church.user),
             is_verified=church.is_verified,
+            is_active=church.user.is_active,
             cnpj=church.cnpj,
             banner_url=church.banner_url,
             church_type=church.church_type,
@@ -101,21 +103,25 @@ class ChurchUpdateIn(Schema):
     about: Optional[str] = None
     phone: Optional[str] = None
 
-
     @field_validator("cnpj")
     @classmethod
     def cnpj_valid(cls, v: Optional[str]) -> Optional[str]:
-        if v and not _cnpj.validate(v):
+        # Se vier None ou "", não valida
+        if v is None or v.strip() == "":
+            return None
+        if not _cnpj.validate(v):
             raise ValueError("CNPJ inválido.")
         return v
 
     @field_validator("church_label")
     @classmethod
     def label_to_value(cls, v: Optional[str]) -> Optional[str]:
-        if v and v not in LABEL_TO_VALUE:
+        # Se vier None ou "", não valida
+        if v is None or v.strip() == "":
+            return None
+        if v not in LABEL_TO_VALUE:
             raise ValueError("Tipo de igreja inválido.")
-        return LABEL_TO_VALUE[v] if v else None
-
+        return LABEL_TO_VALUE[v]
 
 # 🔹 Endereços
 class ChurchAddressIn(AddressIn):
