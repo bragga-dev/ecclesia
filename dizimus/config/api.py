@@ -4,20 +4,10 @@ from ninja.errors import ValidationError, AuthenticationError
 from django.http import HttpRequest
 from django.http import JsonResponse
 from dizimus.apps.users.exceptions import PermissionDenied
-
-# USERS
 from dizimus.apps.users.api.auth import router as auth_router
 from dizimus.apps.users.api import router as users_router
 from dizimus.apps.users.api.church_members import router as church_members_router
-
-# CHURCHES
-# ajuste o import conforme a estrutura real
-# from dizimus.apps.churches.api import router as churches_router
-
-# MEMBERS
-# ajuste o import conforme a estrutura real
-# from dizimus.apps.members.api import router as members_router
-
+from dizimus.apps.users.api.admin import router as admin_router
 
 api = NinjaAPI(
     title="ECCLESIA API",
@@ -36,11 +26,7 @@ api = NinjaAPI(
 api.add_router("/auth/", auth_router, tags=["Auth"])
 api.add_router("/users/", users_router, tags=["Users"])
 api.add_router("/churches/", church_members_router, tags=["Churches"])
-
-# descomente quando confirmar os caminhos reais
-# api.add_router("/churches/", churches_router, tags=["Churches"])
-# api.add_router("/members/", members_router, tags=["Members"])
-
+api.add_router("/admin/", admin_router, tags=["Admin"])
 
 # ── Handlers de erro globais ──────────────────────────────────────────────────
 
