@@ -59,43 +59,12 @@ def get_all_members() -> QuerySet[Member]:
     return Member.objects.all()
 
 
-def get_members_by_contribution(contribution_type: str) -> QuerySet[Member]:
-    return Member.objects.filter(contribution_type=contribution_type)
-
-
 def get_members_excluding_id(member_id: uuid.UUID) -> QuerySet[Member]:
     return Member.objects.exclude(pk=member_id)
 
 
 def get_members_ordered_by_name() -> QuerySet[Member]:
     return Member.objects.order_by("first_name", "last_name")
-
-
-def get_all_members_by_church_id(church_id: uuid.UUID) -> QuerySet[MemberChurch]:
-    return (
-        MemberChurch.objects
-        .filter(church_id=church_id)
-        .select_related("member", "church")
-        .order_by("-joined_at")
-    )
-
-
-# ── Filtros de MemberChurch ───────────────────────────────────────────────────
-
-def filter_members_by_status(
-    queryset: QuerySet[MemberChurch],
-    status: str,
-) -> QuerySet[MemberChurch]:
-    """Filtra vínculos por status (ACTIVE, PENDING, INACTIVE)."""
-    return queryset.filter(status=status)
-
-
-def filter_members_by_roles(
-    queryset: QuerySet[MemberChurch],
-    roles: list[str],
-) -> QuerySet[MemberChurch]:
-    """Filtra vínculos por uma lista de funções (role__in)."""
-    return queryset.filter(role__in=roles)
 
 
 # ── Com select_related / prefetch ─────────────────────────────────────────────
@@ -168,19 +137,6 @@ def search_members_by_username(query: str) -> QuerySet[Member]:
         return Member.objects.none()
     return Member.objects.filter(
         Q(username__icontains=query)
-    ).distinct()
-
-
-def search_members_by_contribution(query: str, contribution_type: str) -> QuerySet[Member]:
-    query = query.strip()
-    if not query:
-        return Member.objects.none()
-    return Member.objects.filter(
-        contribution_type=contribution_type
-    ).filter(
-        Q(first_name__icontains=query) |
-        Q(last_name__icontains=query) |
-        Q(cpf__icontains=query)
     ).distinct()
 
 
