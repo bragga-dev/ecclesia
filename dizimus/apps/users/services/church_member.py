@@ -1,17 +1,29 @@
+# services/church_member.py
 """
-Church Member Services — Igreja cadastra membros.
+Church Member Services — Igreja cadastra e lista membros.
 """
 import secrets
 import string
+import uuid
 
-from dizimus.apps.users.models import User, Church, Member
+from django.db.models import QuerySet
+
+from dizimus.apps.users.models.user import User
+from dizimus.apps.users.models.member import Member
+from dizimus.apps.users.models.church import Church
+from dizimus.apps.community.models.member_church_model import MemberChurch
 from dizimus.apps.users import repositories
 from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.selectors import email_exists
+from dizimus.apps.users.selectors.member_selector import (
+    get_all_members_by_church_id,
+    filter_members_by_status,
+    filter_members_by_roles,
+)
+from dizimus.apps.users.selectors.church_selector import get_church_by_id
 
 
 def _generate_temp_password(length: int = 12) -> str:
-    """Gera senha temporária segura: letras + dígitos + símbolos."""
     alphabet = string.ascii_letters + string.digits + "!@#$%"
     pwd = [
         secrets.choice(string.ascii_uppercase),
@@ -32,9 +44,9 @@ def register_member_by_church(
 ) -> Member:
     """
     Igreja cadastra um membro:
-    1. Cria User com role=member e senha temporária
+    1. Cria User com role=MEMBER e senha temporária
     2. Cria Member com first_name e last_name
-    3. Cria MemberChurch vinculando membro à igreja (status=PENDING)
+    3. Cria MemberChurch vinculando membro à igreja (status=ACTIVE)
     4. Dispara e-mail com senha temporária e link de verificação
     """
     if email_exists(email):
@@ -54,8 +66,6 @@ def register_member_by_church(
         last_name=last_name,
     )
 
-    # Cria o vínculo com a igreja que está cadastrando
-    from dizimus.apps.community.models.member_church_model import MemberChurch
     MemberChurch.objects.create(
         member=user.member,
         church=church,
@@ -67,3 +77,34 @@ def register_member_by_church(
     send_member_invite_email.delay(str(user.pk), temp_password)
 
     return user.member
+
+
+def list_member_church_service(
+    church_id: uuid.UUID,
+    *,
+    status: str | None = MemberChurch.Status.ACTIVE,
+    roles: list[str] | None = None,
+) -> QuerySet[MemberChurch]:
+    """
+    Lista membros da igreja aplicando filtros de negócio.
+
+    Args:
+        church_id: ID da igreja.
+        status: Status do vínculo. None → retorna todos os status.
+        roles: Lista de funções permitidas. None → retorna todos os roles.
+
+    Returns:
+        QuerySet[MemberChurch] vazio se a igreja não existir.
+    """
+    if not get_church_by_id(church_id):
+        return MemberChurch.objects.none()
+
+    queryset = get_all_members_by_church_id(church_id)
+
+    if status is not None:
+        queryset = filter_members_by_status(queryset, status)
+
+    if roles:
+        queryset = filter_members_by_roles(queryset, roles)
+
+    return queryset

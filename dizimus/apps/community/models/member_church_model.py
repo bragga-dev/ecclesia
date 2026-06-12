@@ -28,7 +28,6 @@ class MemberChurch(models.Model):
     left_at = models.DateTimeField(_('Data de saída'), null=True, blank=True, help_text=_('Data e hora em que o membro se desvinculou da igreja. Deixe em branco se ainda for membro.'), )
 
     class Meta:
-        unique_together     = ('member', 'church')
         verbose_name        = "Vínculo Membro-Igreja"
         verbose_name_plural = "Vínculos Membro-Igreja"
         ordering            = ['-joined_at']

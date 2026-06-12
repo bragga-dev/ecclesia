@@ -12,7 +12,7 @@ from .user import register_user
 
 # ── Profile (Member & Church) ───────────────────────────────────────────
 from .profile import update_church_profile, update_member_profile
-from .church_member import register_member_by_church
+from .church_member import register_member_by_church, list_member_church_service
 
 # # ── Church services ─────────────────────────────────────────────────────
 # from dizimus.apps.users.services.church.church_service import (
@@ -167,6 +167,7 @@ __all__ = [
     # "validate_cpf_uniqueness",
     # "is_birthday_today",
     # "get_age",
+    "list_member_church_service",
 
     # Church Address
     "list_church_addresses",

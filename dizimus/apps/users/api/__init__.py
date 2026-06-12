@@ -7,12 +7,12 @@ from .verification import router as verification_router
 from dizimus.apps.users.api.me import router as me_router
 from .profiles import router as profiles_router
 from .addresses import router as addresses_router
+from .church_members import router as church_members_router
 
-# Router principal com autenticação JWT
 router = Router(auth=JWTAuth())
 
-# Inclui sub-routers
-router.add_router("", me_router)        # /me, /me/photo
-router.add_router("", profiles_router)  # /me/profile, /me/banner
-router.add_router("", addresses_router) # /me/addresses
-router.add_router("", verification_router) # /verify-email, /resend-verification
+router.add_router("", me_router)             # /me, /me/photo
+router.add_router("", profiles_router)       # /me/profile, /me/banner
+router.add_router("", addresses_router)      # /me/addresses
+router.add_router("", verification_router)   # /verify-email, /resend-verification
+router.add_router("", church_members_router) # /members, /members/all, /members/pending...

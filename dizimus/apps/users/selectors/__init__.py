@@ -52,6 +52,7 @@ from .member_selector import (
     search_members_by_contribution,
     search_members_by_city,
     get_members_by_birth_month,
+    get_member_church,
 )
 
 # ── Church ────────────────────────────────────────────────────────────────────
@@ -125,6 +126,7 @@ __all__ = [
     "get_member_with_user",
     "get_member_with_addresses",
     "get_member_full",
+    "get_member_church",
     # Member — endereços
     "get_addresses_by_member",
     "get_member_principal_address",
@@ -136,6 +138,7 @@ __all__ = [
     "search_members_by_contribution",
     "search_members_by_city",
     "get_members_by_birth_month",
+    "get_all_members_by_church_id",
 
     # Church — busca
     "get_church_by_id",
