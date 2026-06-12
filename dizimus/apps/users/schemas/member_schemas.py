@@ -11,23 +11,6 @@ from enum import Enum
 
 _cpf = CPF()
 
-
-LABEL_TO_VALUE = {
-    "Nenhum": "none",
-    "Dizimista": "dizimista",
-    "Ofertante": "ofertante",
-    "Dizimista e Ofertante": "both",
-}
-VALUE_TO_LABEL = {v: k for k, v in LABEL_TO_VALUE.items()}
-
-
-class ContributionTypeEnum(str, Enum):
-    NONE = "none"
-    DIZIMISTA = "dizimista"
-    OFERTANTE = "ofertante"
-    BOTH = "both"
-
-
 class MemberOut(Schema):
     id: uuid.UUID
     user: UserOut
@@ -37,7 +20,6 @@ class MemberOut(Schema):
     cpf: Optional[str]
     phone: Optional[str]
     date_of_birth: Optional[date]
-    contribution_type: ContributionTypeEnum
     contribution_label: str
 
 
@@ -53,7 +35,6 @@ class MemberOut(Schema):
             phone=str(member.phone) if member.phone else None,
             date_of_birth=member.date_of_birth,
             contribution_type=member.contribution_type,
-            contribution_label=VALUE_TO_LABEL[member.contribution_type],
         )
 
 
@@ -65,7 +46,6 @@ class MemberCreateIn(Schema):
     cpf: Optional[str] = None
     phone: Optional[str] = None
     date_of_birth: Optional[date] = None
-    contribution_label: str = Field(..., description="Tipo de contribuição: 'Nenhum', 'Dizimista', 'Ofertante' ou 'Dizimista e Ofertante'.")
 
     @field_validator("cpf")
     @classmethod
@@ -88,14 +68,6 @@ class MemberCreateIn(Schema):
         if not re.match(r'^[\w.@+-]+$', v):
             raise ValueError("Username inválido. Use apenas letras, números e @/./+/-/_.")
         return v
-
-    @field_validator("contribution_label")
-    @classmethod
-    def label_to_value(cls, v: str) -> str:
-        if v not in LABEL_TO_VALUE:
-            raise ValueError("Tipo de contribuição inválido.")
-        return LABEL_TO_VALUE[v]
-
 class MemberUpdateIn(Schema):
     username:   Optional[str] = Field(None, min_length=3, max_length=30)
     first_name: Optional[str] = Field(None, min_length=2, max_length=150)
@@ -103,8 +75,6 @@ class MemberUpdateIn(Schema):
     cpf:        Optional[str] = None
     phone:      Optional[str] = None
     date_of_birth: Optional[date] = None
-    contribution_label: Optional[str] = Field(None, description="Tipo de contribuição: 'Nenhum', 'Dizimista', 'Ofertante' ou 'Dizimista e Ofertante'.")
-
     
     @field_validator("cpf")
     @classmethod
@@ -127,14 +97,6 @@ class MemberUpdateIn(Schema):
         if not re.match(r'^[\w.@+-]+$', v):
             raise ValueError("Username inválido. Use apenas letras, números e @/./+/-/_.")
         return v
-    
-    @field_validator("contribution_label")
-    @classmethod
-    def label_to_value(cls, v: Optional[str]) -> Optional[str]:
-        if v and v not in LABEL_TO_VALUE:
-            raise ValueError("Tipo de contribuição inválido.")
-        return LABEL_TO_VALUE[v] if v else None
-
 
 class MemberAddressIn(AddressIn):
     """Endereço de Membro — igual ao base."""
@@ -149,70 +111,11 @@ class MemberAddressOut(AddressOut):
 
 
 
-# ── Cadastro de membro por Igreja ─────────────────────────────────────────────
-
-class ChurchRegisterMemberIn(Schema):
-    """Payload para Igreja cadastrar um membro."""
-    email:      str = Field(..., pattern=r'^[\w\.-]+@[\w\.-]+\.\w+$')
-    first_name: str = Field(..., min_length=2, max_length=150)
-    last_name:  str = Field(..., min_length=2, max_length=150)
-    
-
-
-class MemberInviteOut(Schema):
-    """Resposta após Igreja cadastrar um membro."""
-    id:    uuid.UUID
-    email: str
-    first_name: Optional[str]
-    last_name:  Optional[str]
-
-
-# ── Listagem de membros pela Igreja ──────────────────────────────────────────
-class MemberChurchRoleEnum(str, Enum):
-    MEMBER       = "member"
-    PASTOR       = "pastor/padre"
-    TREASURER    = "tesoureiro"
-    SECRETARY    = "secretário"
-    CHURCH_ADMIN = "admin"
-
-class MemberChurchStatusEnum(str, Enum):
-    ACTIVE   = "active"
-    INACTIVE = "inactive"
-    PENDING  = "pending"
-class ChurchMemberListOut(Schema):
-    """Membro na listagem da igreja."""
-    id:         uuid.UUID
-    email:      str
-    first_name: Optional[str]
-    last_name:  Optional[str]
-    phone:      Optional[str]
-    role:       MemberChurchRoleEnum 
-    status:     MemberChurchStatusEnum 
-    status:     str
-    joined_at:  str
-
-    @classmethod
-    def from_membership(cls, membership) -> "ChurchMemberListOut":
-        member = membership.member
-        return cls(
-            id=member.user.id,
-            email=member.user.email,
-            first_name=member.first_name,
-            last_name=member.last_name,
-            phone=str(member.phone) if member.phone else None,
-            role=membership.role,
-            status=membership.status,
-            joined_at=membership.joined_at.isoformat(),
-        )
-    
-
 __all__ = [
     "MemberOut",
     "MemberCreateIn",
     "MemberUpdateIn",
     "MemberAddressIn",
     "MemberAddressOut",
-    "ContributionTypeEnum",
     "MemberAddressUpdateIn",
-    "ChurchMemberListOut"
 ]
