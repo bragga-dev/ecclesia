@@ -79,12 +79,8 @@ def register_member_by_church(
     return user.member
 
 
-def list_member_church_service(
-    church_id: uuid.UUID,
-    *,
-    status: str | None = MemberChurch.Status.ACTIVE,
-    roles: list[str] | None = None,
-) -> QuerySet[MemberChurch]:
+def list_member_church_service(church_id: uuid.UUID, *, status: str | None = MemberChurch.Status.ACTIVE,
+    roles: list[str] | None = None,) -> QuerySet[MemberChurch]:
     """
     Lista membros da igreja aplicando filtros de negócio.
 

@@ -14,12 +14,6 @@ from phonenumbers import parse, format_number, PhoneNumberFormat
 
 
 class Member(models.Model):
-    class ContributionType(models.TextChoices):
-        NONE = "none", "Nenhum"
-        DIZIMISTA = "dizimista", "Dizimista"
-        OFERTANTE = "ofertante", "Ofertante"
-        BOTH = "both", "Dizimista e Ofertante"
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="member",)
     first_name = models.CharField(_('Primeiro nome'), max_length=150, blank=True, null=True, default="")
@@ -30,7 +24,6 @@ class Member(models.Model):
     validators=[validators.RegexValidator(re.compile(r'^[\w.@+-]+$'), _('Entre com um nome de usuário válido.'), _('inválido'))]
     cpf = models.CharField(max_length=14, unique=True, null=True, blank=True, validators=[validate_cpf],  help_text=_('Formato: 000.000.000-00.'),)
     slug  = models.SlugField(max_length=255, unique=True, editable=False, null=True, blank=True)
-    contribution_type = models.CharField(_('Tipo de contribuição'), max_length=20, choices=ContributionType.choices, default=ContributionType.NONE)
     date_of_birth = models.DateField(_('Data de nascimento'), null=True, blank=True, help_text=_('Formato: DD/MM/AAAA.'),)
 
     class Meta:
