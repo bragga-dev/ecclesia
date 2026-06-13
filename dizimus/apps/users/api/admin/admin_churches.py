@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from dizimus.apps.users.permissions import AdminOnlyAuth
 from dizimus.apps.users.models import Church
 from dizimus.apps.users.schemas.church_schemas import ChurchOut, ChurchUpdateIn
-from dizimus.apps.users.schemas.member_schemas import ChurchMemberListOut
+from dizimus.apps.community.schemas.member_church_schema import ChurchMemberListOut
 from dizimus.apps.users.schemas.profile_church_schema import ChurchProfileOut
 from dizimus.apps.users.schemas.users_schemas import MessageOut
 from dizimus.apps.users.selectors.church_selector import (

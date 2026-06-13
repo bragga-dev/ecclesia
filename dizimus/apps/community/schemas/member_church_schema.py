@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from ninja import Schema, Field
-from pydantic import EmailStr, field_validator
+from pydantic import EmailStr
 from enum import Enum
 
 from dizimus.apps.community.models.member_church_model import MemberChurch

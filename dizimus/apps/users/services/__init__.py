@@ -12,7 +12,7 @@ from .user import register_user
 
 # ── Profile (Member & Church) ───────────────────────────────────────────
 from .profile import update_church_profile, update_member_profile
-from .church_member import register_member_by_church, list_member_church_service
+from ...community.services.member_church_service import register_member_by_church, list_member_church_service
 
 # # ── Church services ─────────────────────────────────────────────────────
 # from dizimus.apps.users.services.church.church_service import (

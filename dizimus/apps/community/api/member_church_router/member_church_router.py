@@ -5,13 +5,13 @@ from ninja import Router, Query
 from dizimus.apps.users.permissions import ChurchOnlyAuth
 from dizimus.apps.users.models import User
 from dizimus.apps.users.exceptions import UserAlreadyExists
-from dizimus.apps.users.schemas.member_schemas import (
+from dizimus.apps.community.schemas.member_church_schema import (   
     ChurchRegisterMemberIn,
     MemberInviteOut,
     ChurchMemberListOut,
 )
 from dizimus.apps.users.schemas.users_schemas import MessageOut
-from dizimus.apps.users.services.church_member import (
+from dizimus.apps.community.services.member_church_service import (
     register_member_by_church,
     list_member_church_service,
 )

@@ -53,7 +53,7 @@ def update_church_profile(request, payload: ChurchUpdateIn):
     except UserAlreadyExists as e:
         return 409, {"detail": str(e)}
     except DjangoValidationError as e:
-        return 422, {"detail": str(e.message)}
+        return 422, {"detail": str(e)}
 
 
 @router.patch("/me/profile/member", auth=MemberOnlyAuth(), response={200: MemberProfileOut, 403: MessageOut, 409: MessageOut, 422: MessageOut},

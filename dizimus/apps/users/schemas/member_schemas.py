@@ -20,8 +20,7 @@ class MemberOut(Schema):
     cpf: Optional[str]
     phone: Optional[str]
     date_of_birth: Optional[date]
-    contribution_label: str
-
+    
 
     @classmethod
     def from_orm(cls, member: Member) -> "MemberOut":
@@ -34,7 +33,6 @@ class MemberOut(Schema):
             cpf=member.cpf,
             phone=str(member.phone) if member.phone else None,
             date_of_birth=member.date_of_birth,
-            contribution_type=member.contribution_type,
         )
 
 

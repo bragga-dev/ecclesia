@@ -14,11 +14,11 @@ from dizimus.apps.users.models.member import Member
 from dizimus.apps.users.schemas.member_schemas import MemberOut, MemberUpdateIn
 from dizimus.apps.users.schemas.profile_member_schema import MemberProfileOut
 from dizimus.apps.users.schemas.users_schemas import MessageOut
+from dizimus.apps.community.selectors.member_church_selector import filter_members_by_contribution
 from dizimus.apps.users.selectors.member_selector import (
     get_all_members,
     get_member_by_id,
     search_members,
-    get_members_by_contribution,
     get_members_by_birth_month,
 )
 from dizimus.apps.users import repositories
@@ -52,7 +52,7 @@ def list_members(
     if search:
         qs = search_members(search)
     elif contribution:
-        qs = get_members_by_contribution(contribution)
+        qs = filter_members_by_contribution(contribution)
     elif birth_month:
         qs = get_members_by_birth_month(birth_month)
     else:

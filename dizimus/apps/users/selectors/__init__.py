@@ -37,7 +37,6 @@ from .member_selector import (
     username_exists,
     cpf_exists,
     get_all_members,
-    get_members_by_contribution,
     get_members_excluding_id,
     get_members_ordered_by_name,
     get_member_with_user,
@@ -49,7 +48,6 @@ from .member_selector import (
     get_address_by_id_and_member,
     search_members,
     search_members_by_username,
-    search_members_by_contribution,
     search_members_by_city,
     get_members_by_birth_month,
     get_member_church,
@@ -120,7 +118,6 @@ __all__ = [
     "cpf_exists",
     # Member — listagens
     "get_all_members",
-    "get_members_by_contribution",
     "get_members_excluding_id",
     "get_members_ordered_by_name",
     "get_member_with_user",
@@ -135,7 +132,6 @@ __all__ = [
     # Member — search
     "search_members",
     "search_members_by_username",
-    "search_members_by_contribution",
     "search_members_by_city",
     "get_members_by_birth_month",
     "get_all_members_by_church_id",

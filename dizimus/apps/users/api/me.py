@@ -11,7 +11,7 @@ from dizimus.apps.users.validators.validate_image_file import validate_image_fil
 from django_ratelimit.decorators import ratelimit
 from django.shortcuts import get_object_or_404
 from dizimus.apps.community.models.member_church_model import MemberChurch
-from dizimus.apps.users.schemas.profile_church_schema import MemberChurchOut
+from dizimus.apps.community.schemas.member_church_schema import MemberChurchOut
 
 
 router = Router(auth=VerifiedUserAuth())
@@ -23,7 +23,7 @@ router = Router(auth=VerifiedUserAuth())
 @router.get("/me", response=UserOut, summary="Meu perfil",)
 def get_me(request):
     """Retorna os dados do usuário autenticado."""
-    return request.auth
+    return UserOut.from_orm(request.user)
 
 
 # ── Foto ──────────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ def get_me(request):
 @router.get("/me/photo", response={200: UserOut}, summary="Ver foto de perfil",)
 def get_photo(request):
     """Retorna o usuário com a URL da foto atual."""
-    return 200, request.auth
+    return UserOut.from_orm(request.user)
 
 
 @router.post("/me/photo", response={200: UserOut, 400: MessageOut}, summary="Upload de foto de perfil",)
@@ -43,7 +43,7 @@ def upload_photo(request, photo: UploadedFile = File(...)):
     except DjangoValidationError as e:
         return 400, {"detail": str(e.message)}
     user = repositories.set_user_photo(request.auth, photo)
-    return 200, user
+    return UserOut.from_orm(request.user)
 
 
 @router.patch("/me/photo", response={200: UserOut, 400: MessageOut}, summary="Atualizar foto de perfil",)
@@ -55,7 +55,7 @@ def update_photo(request, photo: UploadedFile = File(...)):
     except DjangoValidationError as e:
         return 400, {"detail": str(e.message)}
     user = repositories.set_user_photo(request.auth, photo)
-    return 200, user
+    return UserOut.from_orm(request.user)
 
 
 @router.delete("/me/photo",  response={200: MessageOut}, summary="Remover foto de perfil",)

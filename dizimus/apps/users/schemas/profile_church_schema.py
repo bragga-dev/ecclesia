@@ -2,19 +2,19 @@
 import uuid
 from typing import Optional
 from ninja import Schema
+
 from dizimus.apps.users.models.user import User
 from dizimus.apps.users.models.church import Church
-from dizimus.apps.users.schemas.users_schemas import VALUE_TO_LABEL
-from dizimus.apps.users.schemas.church_schemas import VALUE_TO_LABEL as CHURCH_VALUE_TO_LABEL
+from dizimus.apps.users.schemas.users_schemas import UserRoleEnum
 
 
 class ChurchProfileOut(Schema):
     # User base
-    id:         uuid.UUID
-    email:      str
-    photo_url:  Optional[str] = None
-    role:       str
-    user_label: str
+    id:          uuid.UUID
+    email:       str
+    photo_url:   Optional[str] = None
+    role:        UserRoleEnum
+    role_label:  str  
 
     # Church específico
     full_name:     Optional[str]
@@ -24,7 +24,7 @@ class ChurchProfileOut(Schema):
     about:         Optional[str]
     phone:         Optional[str]
     slug:          Optional[str]
-    church_label:  Optional[str] = None
+    church_type_label:  Optional[str] = None  
     total_members: Optional[int]
     is_verified:   bool
     banner_url:    Optional[str] = None
@@ -32,33 +32,25 @@ class ChurchProfileOut(Schema):
     @classmethod
     def from_orm(cls, user: User, church: Church) -> "ChurchProfileOut":
         return cls(
+            # User fields
             id=user.id,
             email=user.email,
             photo_url=getattr(user, "photo_url", None),
-            slug=church.slug,
             role=user.role,
-            user_label=VALUE_TO_LABEL[user.role],
+            role_label=user.get_role_display(),
+            
+            # Church fields
             full_name=church.full_name,
             cnpj=church.cnpj,
             instagram=church.instagram,
             website=church.website,
             about=church.about,
             phone=str(church.phone) if church.phone else None,
-            church_label=CHURCH_VALUE_TO_LABEL.get(church.church_type, church.church_type),
+            slug=church.slug,
+            church_type_label=church.get_church_type_display() if hasattr(church, 'get_church_type_display') else None,
             total_members=church.total_members,
             is_verified=church.is_verified,
             banner_url=getattr(church, "banner_url", None),
         )
 
 
-class MemberChurchOut(Schema):
-    id: uuid.UUID
-    photo_url: Optional[str] = None
-    full_name: Optional[str]
-    slug: Optional[str]
-    instagram: Optional[str]
-    website: Optional[str]
-    about: Optional[str]
-    church_label: Optional[str] = None
-    total_members: Optional[int]
-    banner_url: Optional[str] = None
