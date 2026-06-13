@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from dizimus.apps.users.exceptions import PermissionDenied
 from dizimus.apps.users.api.auth import router as auth_router
 from dizimus.apps.users.api import router as users_router
-from dizimus.apps.users.api.church_members import router as church_members_router
+from dizimus.apps.community.api.member_church_router.member_church_router import router as church_members_router
 from dizimus.apps.users.api.admin import router as admin_router
 
 api = NinjaAPI(

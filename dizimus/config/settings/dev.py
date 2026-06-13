@@ -136,3 +136,14 @@ NINJA_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=100),
 
 }
+
+# ========================================================
+# CORS
+# =======================================================
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+
+]
+
+CORS_ALLOW_ALL_ORIGINS = True

@@ -55,6 +55,7 @@ THIRD_PARTY_APPS = [
     "ninja_jwt.token_blacklist",
     "storages",
     "encrypted_model_fields",
+    "corsheaders",
 ]
 
 
@@ -99,6 +100,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "ninja.compatibility.files.fix_request_files_middleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 
