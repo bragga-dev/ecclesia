@@ -42,6 +42,8 @@ def church_register_member(request, payload: ChurchRegisterMemberIn):
             email=payload.email,
             first_name=payload.first_name,
             last_name=payload.last_name,
+            role=payload.role,
+            status=payload.status,
             contribution_type=payload.contribution_type,
         )
     except UserAlreadyExists as e:

@@ -4,34 +4,10 @@ from typing import Optional
 
 from ninja import Schema, Field
 from pydantic import EmailStr
-from enum import Enum
 
 from dizimus.apps.community.models.member_church_model import MemberChurch
 from dizimus.apps.users.schemas.member_schemas import MemberOut
 from dizimus.apps.users.schemas.church_schemas import ChurchOut
-
-
-# ── Enums ─────────────────────────────────────────────────────────────────────
-
-class MemberChurchRoleEnum(str, Enum):
-    MEMBER       = "member"
-    PASTOR       = "pastor/padre"
-    TREASURER    = "tesoureiro"
-    SECRETARY    = "secretário"
-    CHURCH_ADMIN = "admin"
-
-
-class MemberChurchStatusEnum(str, Enum):
-    ACTIVE   = "active"
-    INACTIVE = "inactive"
-    PENDING  = "pending"
-
-
-class MemberChurchContributionTypeEnum(str, Enum):
-    NONE      = "none"
-    DIZIMISTA = "dizimista"
-    OFERTANTE = "ofertante"
-    BOTH      = "both"
 
 
 # ── Saída completa do vínculo ─────────────────────────────────────────────────
@@ -41,9 +17,9 @@ class MemberChurchOut(Schema):
     member:            MemberOut
     church:            ChurchOut
     joined_at:         datetime
-    role:              MemberChurchRoleEnum
-    status:            MemberChurchStatusEnum
-    contribution_type: MemberChurchContributionTypeEnum
+    role:              MemberChurch.Role
+    status:            MemberChurch.Status
+    contribution_type: MemberChurch.ContributionType
     role_label:        str
     status_label:      str
     contribution_label: str
@@ -64,22 +40,13 @@ class MemberChurchOut(Schema):
         )
 
 
-# ── Criação de vínculo ────────────────────────────────────────────────────────
-
-class MemberChurchCreateIn(Schema):
-    member_id:         uuid.UUID
-    church_id:         uuid.UUID
-    role:              MemberChurchRoleEnum              = MemberChurchRoleEnum.MEMBER
-    status:            MemberChurchStatusEnum            = MemberChurchStatusEnum.PENDING
-    contribution_type: MemberChurchContributionTypeEnum  = MemberChurchContributionTypeEnum.NONE
-
 
 # ── Atualização de vínculo ────────────────────────────────────────────────────
 
 class MemberChurchUpdateIn(Schema):
-    role:              Optional[MemberChurchRoleEnum]             = None
-    status:            Optional[MemberChurchStatusEnum]           = None
-    contribution_type: Optional[MemberChurchContributionTypeEnum] = None
+    role:              Optional[MemberChurch.Role]             = None
+    status:            Optional[MemberChurch.Status]           = None
+    contribution_type: Optional[MemberChurch.ContributionType] = None
 
 
 # ── Igreja cadastra membro ────────────────────────────────────────────────────
@@ -88,7 +55,9 @@ class ChurchRegisterMemberIn(Schema):
     email:             EmailStr
     first_name:        str = Field(..., min_length=2, max_length=150)
     last_name:         str = Field(..., min_length=2, max_length=150)
-    contribution_type: MemberChurchContributionTypeEnum = MemberChurchContributionTypeEnum.NONE
+    role: MemberChurch.Role = MemberChurch.Role.MEMBER
+    status: MemberChurch.Status = MemberChurch.Status.ACTIVE
+    contribution_type: MemberChurch.ContributionType = MemberChurch.ContributionType.NONE
 
 
 class MemberInviteOut(Schema):
@@ -96,15 +65,16 @@ class MemberInviteOut(Schema):
     email:      str
     first_name: Optional[str]
     last_name:  Optional[str]
+    
 
 
 # ── Listagem de membros pela Igreja ──────────────────────────────────────────
 
 class ChurchMemberListOut(Schema):
     member:            MemberOut
-    role:              MemberChurchRoleEnum
-    status:            MemberChurchStatusEnum
-    contribution_type: MemberChurchContributionTypeEnum
+    role:              MemberChurch.Role
+    status:            MemberChurch.Status
+    contribution_type: MemberChurch.ContributionType
     joined_at:         datetime
     left_at:           Optional[datetime]
 
@@ -121,11 +91,7 @@ class ChurchMemberListOut(Schema):
 
 
 __all__ = [
-    "MemberChurchRoleEnum",
-    "MemberChurchStatusEnum",
-    "MemberChurchContributionTypeEnum",
     "MemberChurchOut",
-    "MemberChurchCreateIn",
     "MemberChurchUpdateIn",
     "ChurchRegisterMemberIn",
     "MemberInviteOut",

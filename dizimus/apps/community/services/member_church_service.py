@@ -42,6 +42,8 @@ def register_member_by_church(
     email: str,
     first_name: str,
     last_name: str,
+    role: str = MemberChurch.Role.MEMBER,
+    status: str = MemberChurch.Status.ACTIVE,
     contribution_type: str = MemberChurch.ContributionType.NONE,
 ) -> Member:
     """
@@ -71,8 +73,8 @@ def register_member_by_church(
     MemberChurch.objects.create(
         member=user.member,
         church=church,
-        role=MemberChurch.Role.MEMBER,
-        status=MemberChurch.Status.ACTIVE,
+        role=role,
+        status=status,
         contribution_type=contribution_type,
     )
 
