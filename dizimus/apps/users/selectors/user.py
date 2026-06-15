@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 from django.db.models import QuerySet, Q
-from dizimus.apps.users.models import User
+from dizimus.apps.users.models.user import User
 
 
 # ── Busca individual ──────────────────────────────────────────────────────────
@@ -118,16 +118,20 @@ def get_user_with_related(user_id: uuid.UUID) -> Optional[User]:
 
 # ── Search ────────────────────────────────────────────────────────────────────
 
-def search_users(query: str) -> QuerySet[User]:
-    """Busca usuários por e-mail ou telefone."""
+def search_users(query: str):
     query = query.strip()
+
     if not query:
         return User.objects.none()
+
     return User.objects.filter(
         Q(email__icontains=query) |
-        Q(phone__icontains=query)
+        Q(member__first_name__icontains=query) |
+        Q(member__last_name__icontains=query) |
+        Q(member__username__icontains=query) |
+        Q(member__cpf__icontains=query) |
+        Q(church__full_name__icontains=query)
     ).distinct()
-
 
 def search_users_by_role_and_status(role: str, is_active: bool) -> QuerySet[User]:
     """

@@ -10,3 +10,7 @@ class UserAlreadyExists(Exception):
 class UserNotFound(Exception):
     def __init__(self):
         super().__init__(_("Usuário não encontrado."))
+
+
+class EmailNotVerified(Exception):
+    pass

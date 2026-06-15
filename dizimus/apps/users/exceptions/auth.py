@@ -17,3 +17,4 @@ class InvalidToken(Exception):
     def __init__(self, message=None):
         self.message = message or _("Token inválido ou expirado.")
         super().__init__(self.message)
+

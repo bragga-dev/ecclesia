@@ -1,6 +1,5 @@
 """
 Admin — Churches router.
-
 Operações transversais de igrejas: só o superusuário/admin executa.
 """
 import uuid
@@ -12,18 +11,20 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from dizimus.apps.users.permissions import AdminOnlyAuth
 from dizimus.apps.users.models import Church
 from dizimus.apps.users.schemas.church_schemas import ChurchOut, ChurchUpdateIn
-from dizimus.apps.community.schemas.member_church_schema import ChurchMemberListOut
 from dizimus.apps.users.schemas.profile_church_schema import ChurchProfileOut
 from dizimus.apps.users.schemas.users_schemas import MessageOut
 from dizimus.apps.users.selectors.church_selector import (
     get_all_churches,
     get_verified_churches,
     get_unverified_churches,
+    get_church_by_id,
     search_churches,
 )
-from dizimus.apps.community.models.member_church_model import MemberChurch
 from dizimus.apps.users import repositories
 from dizimus.apps.users.utils.pagination import paginate_queryset, PageOut, PAGE_SIZE_DEFAULT
+from dizimus.apps.community.schemas.member_church_schema import ChurchMemberListOut
+from dizimus.apps.community.services.member_church_service import list_member_church_service
+from dizimus.apps.community.models.member_church_model import MemberChurch
 
 router = Router(tags=["Admin - Churches"])
 
@@ -40,10 +41,13 @@ router = Router(tags=["Admin - Churches"])
         "Filtre por `verified=true/false` ou busque por nome, CNPJ e cidade com `search`."
     ),
 )
-def list_churches(request, page: int = Query(1, ge=1, description="Número da página"),
-    page_size: int = Query(PAGE_SIZE_DEFAULT, ge=1, le=100, description="Itens por página (máx 100)"),
+def list_churches(
+    request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(PAGE_SIZE_DEFAULT, ge=1, le=100),
     verified: Optional[bool] = Query(None, description="true = verificadas · false = pendentes"),
-    search: Optional[str] = Query(None, description="Busca por nome, CNPJ ou cidade"),):
+    search: Optional[str] = Query(None, description="Busca por nome, CNPJ ou cidade"),
+):
     if search:
         qs = search_churches(search)
     elif verified is True:
@@ -62,15 +66,9 @@ def list_churches(request, page: int = Query(1, ge=1, description="Número da p�
     auth=AdminOnlyAuth(),
     response={200: ChurchProfileOut, 404: MessageOut},
     summary="Perfil completo de uma igreja",
-    description="Retorna todos os dados da igreja, incluindo campos específicos do perfil.",
 )
 def get_church(request, church_id: uuid.UUID):
-    church = (
-        Church.objects
-        .select_related("user")
-        .filter(pk=church_id)
-        .first()
-    )
+    church = get_church_by_id(church_id)
     if not church:
         return 404, {"detail": "Igreja não encontrada."}
     return 200, ChurchProfileOut.from_orm(church.user, church)
@@ -83,10 +81,9 @@ def get_church(request, church_id: uuid.UUID):
     auth=AdminOnlyAuth(),
     response={200: ChurchProfileOut, 404: MessageOut, 409: MessageOut, 422: MessageOut},
     summary="Edita dados de uma igreja",
-    description="Permite ao admin corrigir ou completar os dados de qualquer igreja.",
 )
 def update_church(request, church_id: uuid.UUID, payload: ChurchUpdateIn):
-    church = Church.objects.select_related("user").filter(pk=church_id).first()
+    church = get_church_by_id(church_id)
     if not church:
         return 404, {"detail": "Igreja não encontrada."}
 
@@ -107,13 +104,12 @@ def update_church(request, church_id: uuid.UUID, payload: ChurchUpdateIn):
     summary="Verifica (aprova) uma igreja",
 )
 def verify_church(request, church_id: uuid.UUID):
-    church = Church.objects.filter(pk=church_id).first()
+    church = get_church_by_id(church_id)
     if not church:
         return 404, {"detail": "Igreja não encontrada."}
     if church.is_verified:
         return 200, {"detail": "Igreja já está verificada."}
-    church.is_verified = True
-    church.save(update_fields=["is_verified"])
+    repositories.set_church_as_verified(church)
     return 200, {"detail": "Igreja verificada com sucesso."}
 
 
@@ -124,11 +120,10 @@ def verify_church(request, church_id: uuid.UUID):
     summary="Revoga verificação de uma igreja",
 )
 def unverify_church(request, church_id: uuid.UUID):
-    church = Church.objects.filter(pk=church_id).first()
+    church = get_church_by_id(church_id)
     if not church:
         return 404, {"detail": "Igreja não encontrada."}
-    church.is_verified = False
-    church.save(update_fields=["is_verified"])
+    repositories.set_church_as_unverified(church)
     return 200, {"detail": "Verificação revogada."}
 
 
@@ -148,20 +143,15 @@ def list_church_members(
     page_size: int = Query(PAGE_SIZE_DEFAULT, ge=1, le=100),
     status: Optional[str] = Query(None, description="Filtrar por status: active, inactive, pending"),
 ):
-    church = Church.objects.filter(pk=church_id).first()
+    church = get_church_by_id(church_id)
     if not church:
         return 404, {"detail": "Igreja não encontrada."}
 
-    qs = (
-        MemberChurch.objects
-        .select_related("member__user")
-        .filter(church=church)
-        .order_by("joined_at")
+    memberships = list_member_church_service(
+        church_id=church_id,
+        status=status,
     )
-    if status:
-        qs = qs.filter(status=status)
-
-    return 200, paginate_queryset(qs, page, page_size, ChurchMemberListOut.from_membership)
+    return 200, paginate_queryset(memberships, page, page_size, ChurchMemberListOut.from_membership)
 
 
 # ── Remoção ───────────────────────────────────────────────────────────────────
@@ -174,8 +164,8 @@ def list_church_members(
     description="Remove a igreja e o usuário vinculado. Ação irreversível.",
 )
 def delete_church(request, church_id: uuid.UUID):
-    church = Church.objects.select_related("user").filter(pk=church_id).first()
+    church = get_church_by_id(church_id)
     if not church:
         return 404, {"detail": "Igreja não encontrada."}
-    church.user.delete()  # CASCADE remove o Church junto
+    church.user.delete()
     return 200, {"detail": "Igreja removida com sucesso."}

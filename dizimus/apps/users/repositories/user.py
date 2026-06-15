@@ -20,7 +20,15 @@ def create_user(
     return user
 
 def activate_user(user: User) -> User:
-    user.is_active = True
-    user.is_trusty = True
-    user.save(update_fields=["is_active", "is_trusty"])
+    if not user.is_active or user.is_trusty:
+        user.is_active = True
+        user.is_trusty = True
+        user.save(update_fields=["is_active", "is_trusty"])
+    return user
+
+def deactivate_user(user: User) -> User:
+    if user.is_active or user.is_trusty:
+        user.is_active = False
+        user.is_trusty = False
+        user.save(update_fields=["is_active", "is_trusty"])
     return user

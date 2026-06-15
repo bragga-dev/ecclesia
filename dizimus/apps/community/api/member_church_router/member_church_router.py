@@ -1,45 +1,48 @@
 """
 Church Members router — Igreja cadastra e lista seus membros.
+Pertence ao app community.
 """
 from ninja import Router, Query
+from django_ratelimit.decorators import ratelimit
+
 from dizimus.apps.users.permissions import ChurchOnlyAuth
-from dizimus.apps.users.models import User
 from dizimus.apps.users.exceptions import UserAlreadyExists
-from dizimus.apps.community.schemas.member_church_schema import (   
+from dizimus.apps.users.schemas.users_schemas import MessageOut
+from dizimus.apps.users.utils.pagination import paginate_queryset, PageOut
+from dizimus.apps.community.models.member_church_model import MemberChurch
+from dizimus.apps.community.schemas.member_church_schema import (
     ChurchRegisterMemberIn,
     MemberInviteOut,
     ChurchMemberListOut,
 )
-from dizimus.apps.users.schemas.users_schemas import MessageOut
 from dizimus.apps.community.services.member_church_service import (
     register_member_by_church,
     list_member_church_service,
 )
-from dizimus.apps.community.models.member_church_model import MemberChurch
-from django_ratelimit.decorators import ratelimit
-from dizimus.apps.users.utils.pagination import paginate_queryset, PageOut
 
 router = Router(tags=["Churches"])
 
 
-@router.post("/members", auth=ChurchOnlyAuth(), response={201: MemberInviteOut, 409: MessageOut},
+@router.post(
+    "/members",
+    auth=ChurchOnlyAuth(),
+    response={201: MemberInviteOut, 409: MessageOut},
     summary="Igreja cadastra um membro",
     description=(
         "Apenas a Igreja autenticada pode cadastrar membros. "
         "O membro recebe um e-mail com senha temporária e link de verificação."
     ),
 )
-@ratelimit(key="user", rate="30/m", block=True,)
+@ratelimit(key="user", rate="30/m", block=True)
 def church_register_member(request, payload: ChurchRegisterMemberIn):
-    user: User = request.auth
-    church = user.church
-
+    church = request.auth.church
     try:
         member = register_member_by_church(
             church=church,
             email=payload.email,
             first_name=payload.first_name,
             last_name=payload.last_name,
+            contribution_type=payload.contribution_type,
         )
     except UserAlreadyExists as e:
         return 409, {"detail": str(e)}

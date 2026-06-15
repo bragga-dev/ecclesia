@@ -120,16 +120,18 @@ def get_address_by_id_and_member(
 
 # ── Search ────────────────────────────────────────────────────────────────────
 
-def search_members(query: str) -> QuerySet[Member]:
-    query = query.strip()
-    if not query:
-        return Member.objects.none()
+def search_members(search: str):
     return Member.objects.filter(
-        Q(first_name__icontains=query) |
-        Q(last_name__icontains=query) |
-        Q(cpf__icontains=query)
+        Q(first_name__icontains=search) |
+        Q(last_name__icontains=search) |
+        Q(username__icontains=search) |
+        Q(phone__icontains=search) |
+        Q(cpf__icontains=search) |
+        Q(addresses__city__icontains=search) |
+        Q(addresses__state__icontains=search) |
+        Q(addresses__cep__icontains=search) |
+        Q(addresses__district__icontains=search)
     ).distinct()
-
 
 def search_members_by_username(query: str) -> QuerySet[Member]:
     query = query.strip()

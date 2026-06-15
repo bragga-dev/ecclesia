@@ -108,7 +108,8 @@ class UserOut(Schema):
     is_active:   bool
     date_joined: datetime
     created_at:  datetime
-    role_label:  str
+    role_label: Optional[str] = None
+
 
     @classmethod
     def from_orm(cls, user: User) -> "UserOut":

@@ -1,6 +1,6 @@
-# services/church_member.py
 """
-Church Member Services — Igreja cadastra e lista membros.
+MemberChurch Services — Igreja cadastra e lista membros.
+Pertence ao app community.
 """
 import secrets
 import string
@@ -15,21 +15,13 @@ from dizimus.apps.community.models.member_church_model import MemberChurch
 from dizimus.apps.users import repositories
 from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.selectors import email_exists
+from dizimus.apps.users.selectors.church_selector import get_church_by_id
 from dizimus.apps.community.selectors.member_church_selector import (
-    get_all_churches_by_member_id,
-    get_all_members_by_church_id, 
+    get_all_members_by_church_id,
     filter_members_by_status,
     filter_members_by_roles,
     filter_members_by_contribution,
-    filter_members_by_joined_after,
-    search_members_in_church,
-    get_member_church,
-    get_member_church_by_id,
-
 )
-
-
-from dizimus.apps.users.selectors.church_selector import get_church_by_id
 
 
 def _generate_temp_password(length: int = 12) -> str:
@@ -50,6 +42,7 @@ def register_member_by_church(
     email: str,
     first_name: str,
     last_name: str,
+    contribution_type: str = MemberChurch.ContributionType.NONE,
 ) -> Member:
     """
     Igreja cadastra um membro:
@@ -80,6 +73,7 @@ def register_member_by_church(
         church=church,
         role=MemberChurch.Role.MEMBER,
         status=MemberChurch.Status.ACTIVE,
+        contribution_type=contribution_type,
     )
 
     from dizimus.apps.users.tasks.member_invite import send_member_invite_email
@@ -88,15 +82,16 @@ def register_member_by_church(
     return user.member
 
 
-def list_member_church_service(church_id: uuid.UUID, *, status: str | None = MemberChurch.Status.ACTIVE,
-    roles: list[str] | None = None, contribution_types: list[str]|None = None, ) -> QuerySet[MemberChurch]:
+def list_member_church_service(church_id: uuid.UUID,  *,  status: str | None = MemberChurch.Status.ACTIVE,
+    roles: list[str] | None = None,  contribution_types: list[str] | None = None,) -> QuerySet[MemberChurch]:
     """
-    Lista membros da igreja aplicando filtros de negócio.
+    Lista membros vinculados à igreja aplicando filtros de negócio.
 
     Args:
         church_id: ID da igreja.
-        status: Status do vínculo. None → retorna todos os status.
-        roles: Lista de funções permitidas. None → retorna todos os roles.
+        status: Filtra por status do vínculo. None → retorna todos.
+        roles: Lista de funções permitidas. None → retorna todos.
+        contribution_types: Lista de tipos de contribuição. None → retorna todos.
 
     Returns:
         QuerySet[MemberChurch] vazio se a igreja não existir.
@@ -106,13 +101,13 @@ def list_member_church_service(church_id: uuid.UUID, *, status: str | None = Mem
 
     queryset = get_all_members_by_church_id(church_id)
 
-    if status is not None:
+    if status:
         queryset = filter_members_by_status(queryset, status)
 
     if roles:
         queryset = filter_members_by_roles(queryset, roles)
 
     if contribution_types:
-        queryset = filter_members_by_contribution
+        queryset = filter_members_by_contribution(queryset, contribution_types)
 
     return queryset

@@ -25,6 +25,7 @@ class ChurchProfileOut(Schema):
     phone:         Optional[str]
     slug:          Optional[str]
     church_type_label:  Optional[str] = None  
+    church_type:  Optional[str] = None  
     total_members: Optional[int]
     is_verified:   bool
     banner_url:    Optional[str] = None
@@ -48,6 +49,7 @@ class ChurchProfileOut(Schema):
             phone=str(church.phone) if church.phone else None,
             slug=church.slug,
             church_type_label=church.get_church_type_display() if hasattr(church, 'get_church_type_display') else None,
+            church_type=church.church_type,
             total_members=church.total_members,
             is_verified=church.is_verified,
             banner_url=getattr(church, "banner_url", None),

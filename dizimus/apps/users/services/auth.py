@@ -9,15 +9,23 @@ from dizimus.apps.users.exceptions import (
     InvalidCredentials,
     InvalidToken,
     InvalidPassword,
+    EmailNotVerified,
 )
 
 
 def login_user(email: str, password: str) -> dict:
     user = authenticate(username=email, password=password)
+
     if not user:
+        # Verifica se existe mas está inativo (email não confirmado)
+        try:
+            inactive_user = User.objects.get(email=email)
+            if not inactive_user.is_active and inactive_user.check_password(password):
+                raise EmailNotVerified()
+        except User.DoesNotExist:
+            pass
         raise InvalidCredentials()
-    if not user.is_active:
-        raise InvalidCredentials()
+
     return _make_tokens(user)
 
 

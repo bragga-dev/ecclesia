@@ -1,5 +1,5 @@
 from .auth import InvalidCredentials, InvalidPassword, InvalidToken
-from .user import UserAlreadyExists, UserNotFound
+from .user import UserAlreadyExists, UserNotFound, EmailNotVerified
 from .permissions import PermissionDenied
 
 __all__ = [
@@ -9,4 +9,5 @@ __all__ = [
     "UserAlreadyExists",
     "UserNotFound",
     "PermissionDenied",
+    "EmailNotVerified",
 ]

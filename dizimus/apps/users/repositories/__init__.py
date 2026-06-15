@@ -5,6 +5,7 @@ Toda persistência passa por aqui.
 from .user import (
     create_user,
     activate_user,
+    deactivate_user,
 )
 from .photo import (
     set_user_photo,
@@ -15,6 +16,9 @@ from .photo import (
 from .church import (
     create_church_profile,
     update_church_profile,
+    set_church_as_verified,
+    set_church_as_unverified,
+    
 )
 from .member import (
     create_member_profile,
@@ -37,6 +41,7 @@ __all__ = [
     # User
     "create_user",
     "activate_user",
+    "deactivate_user",
     # Photo
     "set_user_photo",
     "remove_user_photo",
@@ -45,6 +50,8 @@ __all__ = [
     # Church
     "create_church_profile",
     "update_church_profile",
+    "set_church_as_verified",
+    "set_church_as_unverified",
     # Member
     "create_member_profile",
     "update_member_profile",

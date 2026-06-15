@@ -23,7 +23,7 @@ def register_user(data: RegisterIn) -> dict:
     user = repositories.create_user(
         email=data.email,
         password=data.password,
-        role=data.user_label,
+        role=data.role,
     )
 
     if user.role == User.UserRole.CHURCH:
