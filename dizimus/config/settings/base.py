@@ -411,7 +411,7 @@ FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 # FRONTEND  
 # =========================================================
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
-
+BACKEND_URL  = env("BACKEND_URL",  default="http://localhost:8000")
 
 
 # =========================================================

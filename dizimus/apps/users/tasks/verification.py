@@ -45,10 +45,10 @@ def send_verification_email(self, user_id: str) -> None:
         )
 
         verify_url = (
-            f"{settings.FRONTEND_URL}"
-            f"/verify-email/"
+            f"{settings.BACKEND_URL}"
+            f"/api/users/verify-email/"
             f"{uid}/"
-            f"{token}/"
+            f"{token}"
         )
 
         logger.info(
