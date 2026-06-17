@@ -23,6 +23,7 @@ from dizimus.apps.community.services.member_church_service import (
     list_member_church_service,
     update_member_church_service,
     delete_member_church_service,
+    get_church_membership_service,
 )
 from dizimus.apps.users.services.profile import update_member_profile
 from dizimus.apps.community.selectors.member_church_selector import get_member_church_by_id
@@ -281,3 +282,38 @@ def church_delete_member(request, membership_id: uuid.UUID):
     except MemberChurch.DoesNotExist as e:
         return 404, {"detail": str(e)}
     return 200, {"detail": "Vínculo removido com sucesso."}
+
+#_______________________________________________________________
+
+@router.get(
+    "/members/{membership_id}",
+    auth=ChurchOnlyAuth(),
+    response={
+        200: MemberChurchOut,
+        404: MessageOut,
+        401: MessageOut,
+    },
+)
+@ratelimit(key="user", rate="30/m", block=True)
+def get_church_membership_router(
+    request,
+    membership_id: uuid.UUID,
+):
+    church = request.auth.church
+
+    try:
+        membership, _ = (
+            get_church_membership_service(
+                membership_id,
+                church.id,
+            )
+        )
+
+    except MemberChurch.DoesNotExist as e:
+        return 404, {
+            "detail": str(e)
+        }
+
+    return 200, MemberChurchOut.from_orm(
+        membership
+    )

@@ -124,5 +124,12 @@ def update_member_church_service(
 def delete_member_church_service(membership_id: uuid.UUID,  church_id: uuid.UUID,) -> None:
     membership = get_member_church_by_id(membership_id)
     if not membership or membership.church_id != church_id:
-        raise MemberChurch.DoesNotExist(f"MemberChurch com id {membership} não encontrado para esta igreja")
+        raise MemberChurch.DoesNotExist(f"Vínculo com id {membership} não encontrado para esta igreja")
     delete_member_church_repository(membership)
+
+
+def get_church_membership_service(membership_id: uuid.UUID, church_id: uuid.UUID) -> tuple[MemberChurch, Member]:
+    membership = get_member_church_by_id(membership_id)
+    if not membership or membership.church_id != church_id:
+        raise MemberChurch.DoesNotExist(f"Vínculo com id {membership} não encontrado para esta igreja")
+    return membership, membership.member
