@@ -69,18 +69,43 @@ def filter_members_by_joined_after(queryset: QuerySet[MemberChurch],  date,) -> 
 
 
 # ── Search ────────────────────────────────────────────────────────────────────
-
-def search_members_in_church(queryset: QuerySet[MemberChurch],  query: str,) -> QuerySet[MemberChurch]:
-    """
-    Busca por nome ou email dentro de um queryset já filtrado por igreja.
-    Encadeia com get_all_members_by_church_id antes de chamar.
-    """
+def search_memberships_selector(queryset: QuerySet[MemberChurch], query: str,) -> QuerySet[MemberChurch]:
     query = query.strip()
     if not query:
-        return queryset.none()
-    return queryset.filter(
-        Q(member__first_name__icontains=query) |
-        Q(member__last_name__icontains=query) |
-        Q(member__user__email__icontains=query) |
-        Q(member__user__cpf__icontains=query)
-    ).distinct()
+        return queryset
+    return (
+        queryset
+        .filter(
+
+            # MEMBER
+            Q(member__first_name__icontains=query)
+            |
+            Q(member__last_name__icontains=query)
+            |
+            Q(member__username__icontains=query)
+            |
+            Q(member__cpf__icontains=query)
+            |
+            Q(member__phone__icontains=query)
+            |
+            Q(member__user__email__icontains=query)
+
+            # ADDRESS
+            |
+            Q(member__addresses__city__icontains=query)
+            |
+            Q(member__addresses__state__icontains=query)
+            |
+            Q(member__addresses__district__icontains=query)
+
+            # MEMBER CHURCH
+            |
+            Q(role__icontains=query)
+            |
+            Q(status__icontains=query)
+            |
+            Q(contribution_type__icontains=query)
+
+        )
+        .distinct()
+    )

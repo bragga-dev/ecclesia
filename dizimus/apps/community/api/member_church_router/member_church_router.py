@@ -24,12 +24,37 @@ from dizimus.apps.community.services.member_church_service import (
     update_member_church_service,
     delete_member_church_service,
     get_church_membership_service,
+    search_church_members_service
 )
 from dizimus.apps.users.services.profile import update_member_profile
 from dizimus.apps.community.selectors.member_church_selector import get_member_church_by_id
 
 router = Router(tags=["Churches"])
 
+#__________________________________________________
+@router.get("/members/search", auth=ChurchOnlyAuth(), summary="Busca", response={200: list[ChurchMemberListOut], 401: MessageOut, },)
+@ratelimit(key="user", rate="30/m", block=True,)
+def search_members_router(
+    request,
+    query: str = "",
+):
+
+    church = request.auth.church
+
+    memberships = (
+        search_church_members_service(
+            church.id,
+            query,
+        )
+    )
+
+    return 200, [
+        ChurchMemberListOut
+        .from_membership(
+            item
+        )
+        for item in memberships
+    ]
 
 @router.post(
     "/members",
@@ -288,6 +313,7 @@ def church_delete_member(request, membership_id: uuid.UUID):
 @router.get(
     "/members/{membership_id}",
     auth=ChurchOnlyAuth(),
+    summary="Retorna dados de um MemberChurch pelo ID",
     response={
         200: MemberChurchOut,
         404: MessageOut,

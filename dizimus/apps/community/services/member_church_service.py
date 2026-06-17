@@ -25,7 +25,7 @@ from dizimus.apps.community.selectors.member_church_selector import (
     filter_members_by_roles,
     filter_members_by_contribution,
 )
-from dizimus.apps.community.selectors.member_church_selector import get_member_church_by_id
+from dizimus.apps.community.selectors.member_church_selector import get_member_church_by_id, search_memberships_selector
 from dizimus.apps.community.repositories.member_church_repository import update_member_church, delete_member_church_repository
    
 
@@ -133,3 +133,16 @@ def get_church_membership_service(membership_id: uuid.UUID, church_id: uuid.UUID
     if not membership or membership.church_id != church_id:
         raise MemberChurch.DoesNotExist(f"Vínculo com id {membership} não encontrado para esta igreja")
     return membership, membership.member
+
+
+def search_church_members_service(church_id: uuid.UUID, query: str | None = None,):
+    queryset = (get_all_members_by_church_id(church_id))
+    if query:
+        queryset = (
+            search_memberships_selector(
+                queryset,
+                query,
+            )
+        )
+
+    return queryset
