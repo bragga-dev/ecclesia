@@ -12,8 +12,8 @@ from enum import Enum
 _cpf = CPF()
 
 class MemberOut(Schema):
-    id: uuid.UUID
     user: UserOut
+    id: uuid.UUID
     username: Optional[str]
     first_name: Optional[str]
     last_name: Optional[str]

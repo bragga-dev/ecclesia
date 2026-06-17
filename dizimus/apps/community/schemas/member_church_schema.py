@@ -44,6 +44,7 @@ class MemberChurchOut(Schema):
 # ── Atualização de vínculo ────────────────────────────────────────────────────
 
 class MemberChurchUpdateIn(Schema):
+
     role:              Optional[MemberChurch.Role]             = None
     status:            Optional[MemberChurch.Status]           = None
     contribution_type: Optional[MemberChurch.ContributionType] = None
@@ -72,6 +73,7 @@ class MemberInviteOut(Schema):
 
 class ChurchMemberListOut(Schema):
     member:            MemberOut
+    id:                uuid.UUID
     role:              MemberChurch.Role
     status:            MemberChurch.Status
     contribution_type: MemberChurch.ContributionType
@@ -79,8 +81,9 @@ class ChurchMemberListOut(Schema):
     left_at:           Optional[datetime]
 
     @classmethod
-    def from_membership(cls, membership) -> "ChurchMemberListOut":
+    def from_membership(cls, membership: MemberChurch) -> "ChurchMemberListOut":
         return cls(
+            id=membership.id,
             member=MemberOut.from_orm(membership.member),
             role=membership.role,
             status=membership.status,

@@ -7,7 +7,9 @@ import string
 import uuid
 
 from django.db.models import QuerySet
-
+from dizimus.apps.community.selectors.member_church_selector import get_member_church
+from dizimus.apps.community.repositories.member_church_repository import update_member_church
+from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.models.user import User
 from dizimus.apps.users.models.member import Member
 from dizimus.apps.users.models.church import Church
@@ -15,6 +17,7 @@ from dizimus.apps.community.models.member_church_model import MemberChurch
 from dizimus.apps.users import repositories
 from dizimus.apps.users.exceptions import UserAlreadyExists
 from dizimus.apps.users.selectors import email_exists
+from dizimus.apps.community.repositories.member_church_repository import create_member_church   
 from dizimus.apps.users.selectors.church_selector import get_church_by_id
 from dizimus.apps.community.selectors.member_church_selector import (
     get_all_members_by_church_id,
@@ -22,7 +25,9 @@ from dizimus.apps.community.selectors.member_church_selector import (
     filter_members_by_roles,
     filter_members_by_contribution,
 )
-
+from dizimus.apps.community.selectors.member_church_selector import get_member_church_by_id
+from dizimus.apps.community.repositories.member_church_repository import update_member_church, delete_member_church_repository
+   
 
 def _generate_temp_password(length: int = 12) -> str:
     alphabet = string.ascii_letters + string.digits + "!@#$%"
@@ -46,13 +51,6 @@ def register_member_by_church(
     status: str = MemberChurch.Status.ACTIVE,
     contribution_type: str = MemberChurch.ContributionType.NONE,
 ) -> Member:
-    """
-    Igreja cadastra um membro:
-    1. Cria User com role=MEMBER e senha temporária
-    2. Cria Member com first_name e last_name
-    3. Cria MemberChurch vinculando membro à igreja (status=ACTIVE)
-    4. Dispara e-mail com senha temporária e link de verificação
-    """
     if email_exists(email):
         raise UserAlreadyExists("e-mail")
 
@@ -70,7 +68,7 @@ def register_member_by_church(
         last_name=last_name,
     )
 
-    MemberChurch.objects.create(
+    create_member_church(
         member=user.member,
         church=church,
         role=role,
@@ -86,18 +84,6 @@ def register_member_by_church(
 
 def list_member_church_service(church_id: uuid.UUID,  *,  status: str | None = MemberChurch.Status.ACTIVE,
     roles: list[str] | None = None,  contribution_types: list[str] | None = None,) -> QuerySet[MemberChurch]:
-    """
-    Lista membros vinculados à igreja aplicando filtros de negócio.
-
-    Args:
-        church_id: ID da igreja.
-        status: Filtra por status do vínculo. None → retorna todos.
-        roles: Lista de funções permitidas. None → retorna todos.
-        contribution_types: Lista de tipos de contribuição. None → retorna todos.
-
-    Returns:
-        QuerySet[MemberChurch] vazio se a igreja não existir.
-    """
     if not get_church_by_id(church_id):
         return MemberChurch.objects.none()
 
@@ -113,3 +99,30 @@ def list_member_church_service(church_id: uuid.UUID,  *,  status: str | None = M
         queryset = filter_members_by_contribution(queryset, contribution_types)
 
     return queryset
+
+
+
+
+def update_member_church_service(
+    member_church_id: uuid.UUID, 
+    church_id: uuid.UUID,
+    **fields
+) -> MemberChurch:
+    if not fields:
+        raise ValueError("Nenhum campo fornecido para atualização")
+    member_church = get_member_church(member_church_id, church_id)
+    if not member_church:
+        raise MemberChurch.DoesNotExist(
+            f"MemberChurch com id {member_church_id} não encontrado para esta igreja"
+        )
+    try:
+        return update_member_church(member_church, **fields)
+    except Exception as e:
+        raise
+
+
+def delete_member_church_service(membership_id: uuid.UUID,  church_id: uuid.UUID,) -> None:
+    membership = get_member_church_by_id(membership_id)
+    if not membership or membership.church_id != church_id:
+        raise MemberChurch.DoesNotExist(f"MemberChurch com id {membership} não encontrado para esta igreja")
+    delete_member_church_repository(membership)
