@@ -34,41 +34,17 @@ from dizimus.apps.community.selectors.member_church_selector import get_member_c
 router = Router(tags=["Churches"])
 
 #__________________________________________________
-@router.get("/members/search", auth=ChurchOnlyAuth(), summary="Busca", response={200: list[ChurchMemberListOut], 401: MessageOut, },)
+@router.get("/members/search", auth=ChurchOnlyAuth(), summary="Busca", response={200: PageOut[ChurchMemberListOut],
+        401: MessageOut, },)
 @ratelimit(key="user", rate="30/m", block=True,)
-def search_members_router(
-    request,
-    query: str = "",
-):
+def search_members_router(request, query: str = Query( "",
+        description="Busca por nome, email, CPF, cidade, função, status...",
+    ),
 
-    church = request.auth.church
-
-    memberships = (
-        search_church_members_service(
-            church.id,
-            query,
-        )
-    )
-
-    return 200, [
-        ChurchMemberListOut
-        .from_membership(
-            item
-        )
-        for item in memberships
-    ]
-
-# ________________________________________________________________
-
-@router.get("/members/filter", auth=ChurchOnlyAuth(), response={200: PageOut[ChurchMemberListOut], 401: MessageOut,}, summary="Filtros diversos")
-@ratelimit(key="user", rate="30/m", block=True,)
-def filter_members_router(request, filters: ChurchMemberFilterIn = Query(...),
-
-    
     page: int = Query(
         1,
         ge=1,
-        description="Número da página",
+        description="Página atual",
     ),
 
     page_size: int = Query(
@@ -82,9 +58,9 @@ def filter_members_router(request, filters: ChurchMemberFilterIn = Query(...),
     church = request.auth.church
 
     memberships = (
-        filter_membership_service(
+        search_church_members_service(
             church.id,
-            filters,
+            query,
         )
     )
 
@@ -99,6 +75,30 @@ def filter_members_router(request, filters: ChurchMemberFilterIn = Query(...),
     )
 
 
+# ________________________________________________________________
+
+@router.get("/members/filter", auth=ChurchOnlyAuth(), response={200: PageOut[ChurchMemberListOut], 401: MessageOut,},)
+@ratelimit(key="user", rate="30/m", block=True)
+def filter_members_router(request, filters: ChurchMemberFilterIn = Query(...),  page: int = Query(
+        1,
+        ge=1,
+        description="Página atual",
+    ),
+
+    page_size: int = Query(
+        20,
+        ge=1,
+        le=100,
+        description="Itens por página",
+    ), ):
+    memberships = (
+        filter_membership_service(
+            request.auth.church.id,
+            filters,
+        )
+    )
+
+    return 200, paginate_queryset(memberships, page, page_size, ChurchMemberListOut.from_membership,)
 
 
 @router.post(
