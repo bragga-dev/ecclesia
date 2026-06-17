@@ -17,6 +17,7 @@ from dizimus.apps.community.schemas.member_church_schema import (
     ChurchMemberListOut,
     MemberChurchOut,
     MemberChurchUpdateIn,
+    ChurchMemberFilterIn,
 )
 from dizimus.apps.community.services.member_church_service import (
     register_member_by_church,
@@ -24,7 +25,8 @@ from dizimus.apps.community.services.member_church_service import (
     update_member_church_service,
     delete_member_church_service,
     get_church_membership_service,
-    search_church_members_service
+    search_church_members_service,
+    filter_membership_service,
 )
 from dizimus.apps.users.services.profile import update_member_profile
 from dizimus.apps.community.selectors.member_church_selector import get_member_church_by_id
@@ -55,6 +57,49 @@ def search_members_router(
         )
         for item in memberships
     ]
+
+# ________________________________________________________________
+
+@router.get("/members/filter", auth=ChurchOnlyAuth(), response={200: PageOut[ChurchMemberListOut], 401: MessageOut,}, summary="Filtros diversos")
+@ratelimit(key="user", rate="30/m", block=True,)
+def filter_members_router(request, filters: ChurchMemberFilterIn = Query(...),
+
+    
+    page: int = Query(
+        1,
+        ge=1,
+        description="Número da página",
+    ),
+
+    page_size: int = Query(
+        20,
+        ge=1,
+        le=100,
+        description="Itens por página",
+    ),
+):
+
+    church = request.auth.church
+
+    memberships = (
+        filter_membership_service(
+            church.id,
+            filters,
+        )
+    )
+
+    return 200, paginate_queryset(
+        qs=memberships,
+        page=page,
+        page_size=page_size,
+        serializer=(
+            ChurchMemberListOut
+            .from_membership
+        ),
+    )
+
+
+
 
 @router.post(
     "/members",
@@ -89,8 +134,8 @@ def church_register_member(request, payload: ChurchRegisterMemberIn):
         last_name=member.last_name,
     )
 
-# ________________________________________________________________
 
+#_________________________________________________________________________________________
 @router.get(
     "/members",
     auth=ChurchOnlyAuth(),
@@ -98,11 +143,7 @@ def church_register_member(request, payload: ChurchRegisterMemberIn):
     summary="Lista membros ativos",
     description="Retorna todos os membros com status ACTIVE vinculados à igreja autenticada.",
 )
-def church_list_members(
-    request,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
-):
+def church_list_members(request,  page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),):
     memberships = list_member_church_service(
         church_id=request.auth.church.id,
     )
@@ -288,6 +329,8 @@ def update_member_church_profile_router(
         return 400, {"detail": f"Erro ao atualizar perfil: {str(e)}"}
     
 
+
+
 #______________________________________________________
 @router.delete(
     "/members/{membership_id}",
@@ -343,3 +386,5 @@ def get_church_membership_router(
     return 200, MemberChurchOut.from_orm(
         membership
     )
+
+

@@ -12,7 +12,8 @@ from dizimus.apps.community.selectors.member_church_selector import (
     filter_members_by_roles,
     filter_members_by_contribution,
     filter_members_by_joined_after,
-    search_memberships,
+    apply_member_filters,
+    search_memberships_selector,
 )
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     "filter_members_by_roles",
     "filter_members_by_contribution",
     "filter_members_by_joined_after",
-    "search_memberships",
+    "apply_member_filters",
+    "search_memberships_selector",
 ]

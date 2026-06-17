@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 from ninja import Schema, Field
@@ -92,6 +92,41 @@ class ChurchMemberListOut(Schema):
             left_at=membership.left_at,
         )
 
+class ChurchMemberFilterIn(Schema):
+
+    # SEARCH
+    query: Optional[str] = None
+
+    # MEMBER CHURCH
+    status: Optional[list[MemberChurch.Status]] = None
+    roles: Optional[list[MemberChurch.Role]] = None
+
+    contribution_types: Optional[
+        list[MemberChurch.ContributionType]
+    ] = None
+
+    joined_after: Optional[date] = None
+    joined_before: Optional[date] = None
+
+    # MEMBER
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    cpf: Optional[str] = None
+    phone: Optional[str] = None
+
+    # ADDRESS
+    city: Optional[str] = None
+    state: Optional[str] = None
+    district: Optional[str] = None
+    cep: Optional[str] = None
+
+    # BOOLEANOS
+    has_phone: Optional[bool] = None
+    has_cpf: Optional[bool] = None
+
+
 
 __all__ = [
     "MemberChurchOut",
@@ -99,4 +134,5 @@ __all__ = [
     "ChurchRegisterMemberIn",
     "MemberInviteOut",
     "ChurchMemberListOut",
+    "ChurchMemberFilterIn",
 ]

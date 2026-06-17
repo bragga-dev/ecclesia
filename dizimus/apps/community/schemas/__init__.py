@@ -4,6 +4,7 @@ from dizimus.apps.community.schemas.member_church_schema import(
     ChurchRegisterMemberIn,
     MemberInviteOut,
     ChurchMemberListOut,
+    ChurchMemberFilterIn,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "ChurchRegisterMemberIn",
     "MemberInviteOut",
     "ChurchMemberListOut",
+    "ChurchMemberFilterIn",
 ]

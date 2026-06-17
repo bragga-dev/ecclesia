@@ -5,7 +5,7 @@ Nenhuma escrita acontece aqui.
 import uuid
 from django.db.models import QuerySet, Q
 from dizimus.apps.community.models.member_church_model import MemberChurch
-
+from dizimus.apps.community.schemas.member_church_schema import ChurchMemberFilterIn
 
 # ── Busca individual ──────────────────────────────────────────────────────────
 
@@ -67,6 +67,61 @@ def filter_members_by_joined_after(queryset: QuerySet[MemberChurch],  date,) -> 
     """Filtra vínculos cujo ingresso foi após uma data."""
     return queryset.filter(joined_at__gte=date)
 
+
+def apply_member_filters(queryset: QuerySet[MemberChurch], filters: ChurchMemberFilterIn,):
+
+    if filters.status:
+        queryset = queryset.filter(status__in=filters.status)
+
+    if filters.roles:
+        queryset = queryset.filter(role__in=filters.roles)
+
+    if filters.contribution_types:
+        queryset = queryset.filter(contribution_type__in=filters.contribution_types)
+
+    if filters.joined_after:
+        queryset = queryset.filter(joined_at__date__gte=filters.joined_after)
+
+    if filters.joined_before:
+        queryset = queryset.filter(joined_at__date__lte=filters.joined_before)
+
+    if filters.first_name:
+        queryset = queryset.filter(member__first_name__icontains=filters.first_name)
+
+    if filters.last_name:
+        queryset = queryset.filter(member__last_name__icontains=filters.last_name)
+
+    if filters.username:
+        queryset = queryset.filter(member__username__icontains=filters.username)
+
+    if filters.email:
+        queryset = queryset.filter(member__user__email__icontains=filters.email)
+
+    if filters.cpf:
+        queryset = queryset.filter(member__cpf__icontains=filters.cpf)
+
+    if filters.phone:
+        queryset = queryset.filter(member__phone__icontains=filters.phone)
+
+    if filters.city:
+        queryset = queryset.filter(member__addresses__city__icontains=filters.city)
+
+    if filters.state:
+        queryset = queryset.filter(member__addresses__state__icontains=filters.state)
+
+    if filters.district:
+        queryset = queryset.filter(member__addresses__district__icontains=filters.district)
+
+    if filters.cep:
+        queryset = queryset.filter(member__addresses__cep__icontains=filters.cep)
+
+    if filters.has_phone is True:
+        queryset = queryset.exclude(member__phone__isnull=True)
+
+    if filters.has_cpf is True:
+        queryset = queryset.exclude(member__cpf__isnull=True)
+
+    return queryset.distinct()
 
 # ── Search ────────────────────────────────────────────────────────────────────
 def search_memberships_selector(queryset: QuerySet[MemberChurch], query: str,) -> QuerySet[MemberChurch]:

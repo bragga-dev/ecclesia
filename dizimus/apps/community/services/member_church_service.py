@@ -25,9 +25,10 @@ from dizimus.apps.community.selectors.member_church_selector import (
     filter_members_by_roles,
     filter_members_by_contribution,
 )
-from dizimus.apps.community.selectors.member_church_selector import get_member_church_by_id, search_memberships_selector
+from dizimus.apps.community.selectors.member_church_selector import get_member_church_by_id, search_memberships_selector, apply_member_filters
 from dizimus.apps.community.repositories.member_church_repository import update_member_church, delete_member_church_repository
-   
+from dizimus.apps.community.schemas.member_church_schema import ChurchMemberFilterIn
+
 
 def _generate_temp_password(length: int = 12) -> str:
     alphabet = string.ascii_letters + string.digits + "!@#$%"
@@ -144,5 +145,27 @@ def search_church_members_service(church_id: uuid.UUID, query: str | None = None
                 query,
             )
         )
+
+    return queryset
+
+
+def filter_membership_service(church_id: uuid.UUID, filters: ChurchMemberFilterIn,):
+
+    queryset = (get_all_members_by_church_id(church_id))
+
+    if filters.query:
+        queryset = (
+            search_memberships_selector(
+                queryset,
+                filters.query,
+            )
+        )
+
+    queryset = (
+        apply_member_filters(
+            queryset,
+            filters,
+        )
+    )
 
     return queryset
