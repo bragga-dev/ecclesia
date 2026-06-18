@@ -8,7 +8,7 @@ do endereço principal.
 
 import pytest
 
-from .conftest import build_address_data
+from .conftest import build_address_data, build_member_data, build_church_data
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -17,13 +17,11 @@ from .conftest import build_address_data
 
 def create_member_address(member, **overrides):
     from dizimus.apps.users.models.member import MemberAddress
-    # from dizimus.apps.users.member import MemberAddress
     return MemberAddress.objects.create(member=member, **build_address_data(**overrides))
 
 
 def create_church_address(church, **overrides):
     from dizimus.apps.users.models.church import ChurchAddress
-    # from dizimus.apps.users.church import ChurchAddress
     return ChurchAddress.objects.create(church=church, **build_address_data(**overrides))
 
 

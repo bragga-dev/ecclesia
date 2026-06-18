@@ -38,12 +38,8 @@ def disable_image_validators():
     Esses validators tentam ler o arquivo (extensão / tamanho), o que falha
     em testes que não sobem o MinIO.
     """
-    # from dizimus.apps.users.user import User
-    # from dizimus.apps.users.church import Church
-
-
     from dizimus.apps.users.models.user import User
-    from dizimus.apps.users.models.church import  Church
+    from dizimus.apps.users.models.church import Church
 
     photo_field  = User._meta.get_field("photo")
     banner_field = Church._meta.get_field("banner")
@@ -86,11 +82,29 @@ def disable_cep_validators():
 def build_user_data(**overrides):
     """Retorna dict mínimo para criar um User (MEMBER) válido."""
     data = {
-        "email":      "usuario@teste.com",
-        "username":   "usuario",
+        "email": "usuario@teste.com",
+        "password": "SenhaForte123!",
+    }
+    data.update(overrides)
+    return data
+
+
+def build_member_data(**overrides):
+    """Retorna dict mínimo para criar um Member válido."""
+    data = {
         "first_name": "João",
-        "last_name":  "Silva",
-        "password":   "SenhaForte123!",
+        "last_name": "Silva",
+        "username": "joaosilva",
+    }
+    data.update(overrides)
+    return data
+
+
+def build_church_data(**overrides):
+    """Retorna dict mínimo para criar uma Church válida."""
+    data = {
+        "full_name": "Igreja Batista",
+        "phone": VALID_PHONE,
     }
     data.update(overrides)
     return data
@@ -120,12 +134,9 @@ def member_user(db):
 
 @pytest.fixture
 def church_user(db):
-    from dizimus.apps.users.models import User
+    from dizimus.apps.users.models.user import User
     return User.objects.create_user(**build_user_data(
         email="igreja@teste.com",
-        username="igrejateste",
-        first_name="Igreja",
-        last_name="Batista",
         role="church",
     ))
 
@@ -135,9 +146,6 @@ def admin_user(db):
     from dizimus.apps.users.models.user import User
     return User.objects.create_superuser(**build_user_data(
         email="admin@teste.com",
-        username="adminroot",
-        first_name="Admin",
-        last_name="Root",
     ))
 
 
@@ -146,9 +154,6 @@ def second_member_user(db):
     from dizimus.apps.users.models.user import User
     return User.objects.create_user(**build_user_data(
         email="outro@teste.com",
-        username="outrousuario",
-        first_name="Maria",
-        last_name="Souza",
     ))
 
 
@@ -157,24 +162,31 @@ def second_member_user(db):
 @pytest.fixture
 def member(db, member_user):
     from dizimus.apps.users.models.member import Member
-    return Member.objects.create(user=member_user)
+    from .conftest import build_member_data
+    return Member.objects.create(user=member_user, **build_member_data())
 
 
 @pytest.fixture
 def second_member(db, second_member_user):
     from dizimus.apps.users.models.member import Member
-    return Member.objects.create(user=second_member_user)
+    from .conftest import build_member_data
+    return Member.objects.create(
+        user=second_member_user,
+        first_name="Maria",
+        last_name="Souza",
+        username="mariasouza",
+    )
 
 
 @pytest.fixture
 def church(db, church_user):
     from dizimus.apps.users.models.church import Church
-    return Church.objects.create(user=church_user)
+    from .conftest import build_church_data
+    return Church.objects.create(user=church_user, **build_church_data())
 
 
+# ─── Fixtures de relacionamento ──────────────────────────────────────────────
 
-# Fixtures de relacionamento entre entidades (ex: MemberChurch) podem ser importados
-# dos testes de community, já que dependem do mesmo modelo e não têm relação com
 @pytest.fixture
 def member_church_link(db, member, church):
     """Cria um vínculo MemberChurch com status PENDING (padrão)."""

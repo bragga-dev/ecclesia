@@ -2,15 +2,16 @@
 Testes de Church e ChurchAddress
 ──────────────────────────────────
 Cobre: banner padrão, banner_url, has_valid_asaas_token, refresh_total_members,
-__str__, verificação de CNPJ (via validator) e one-to-one com User.
+__str__, verificação de CNPJ (via validator), one-to-one com User, e slug.
 """
 
 import pytest
 from unittest.mock import patch, PropertyMock
 from django.db import IntegrityError
 from django.test import override_settings
+from django.utils.text import slugify
 
-from .conftest import VALID_CNPJ, INVALID_CNPJ, build_user_data
+from .conftest import VALID_CNPJ, INVALID_CNPJ, build_user_data, build_address_data
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -23,8 +24,18 @@ class TestChurchBasic:
     def test_church_criada_com_sucesso(self, church):
         assert church.pk is not None
 
-    def test_str_retorna_nome_completo_do_usuario(self, church):
-        assert str(church) == church.user.get_full_name()
+    def test_str_retorna_full_name(self, church):
+        assert str(church) == church.full_name
+
+    def test_str_fallback_quando_full_name_vazio(self, db):
+        from dizimus.apps.users.models.church import Church
+        from dizimus.apps.users.models.user import User
+        user = User.objects.create_user(
+            email="igreja@teste.com",
+            role="church",
+        )
+        church = Church.objects.create(user=user, full_name="")
+        assert str(church) == f"Igreja {church.id}"
 
     def test_is_verified_falso_por_padrao(self, church):
         assert church.is_verified is False
@@ -35,11 +46,13 @@ class TestChurchBasic:
     def test_relacao_one_to_one_com_user(self, church_user, church):
         assert church.user == church_user
         assert church_user.church == church
-
+    
     def test_nao_pode_criar_duas_churches_para_mesmo_user(self, church_user, church):
         from dizimus.apps.users.models.church import Church
-        with pytest.raises(IntegrityError):
+        from django.core.exceptions import ValidationError
+        with pytest.raises(ValidationError) as exc_info:
             Church.objects.create(user=church_user)
+        assert 'user' in exc_info.value.message_dict
 
     def test_instagram_nulo_por_padrao(self, church):
         assert church.instagram is None
@@ -50,9 +63,94 @@ class TestChurchBasic:
     def test_about_nulo_por_padrao(self, church):
         assert church.about is None
 
+    def test_church_type_padrao_e_independent(self, church):
+        from dizimus.apps.users.models.church import Church
+        assert church.church_type == Church.ChurchType.INDEPENDENT
+
+    def test_parent_church_nulo_por_padrao(self, church):
+        assert church.parent_church is None
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Banner
+# Church — slug
+# ─────────────────────────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+class TestChurchSlug:
+
+    def test_slug_gerado_ao_criar(self, church):
+        assert church.slug != ""
+        assert church.slug is not None
+
+    def test_slug_baseado_no_full_name(self, church):
+        # full_name = "Igreja Batista" → "igreja-batista"
+        assert church.slug == slugify(church.full_name)
+
+    def test_slug_unico_para_nomes_iguais(self, db):
+        from dizimus.apps.users.models.church import Church
+        from dizimus.apps.users.models.user import User
+        
+        u1 = User.objects.create_user(email="igreja1@teste.com", role="church")
+        u2 = User.objects.create_user(email="igreja2@teste.com", role="church")
+        
+        c1 = Church.objects.create(user=u1, full_name="Igreja da Paz")
+        c2 = Church.objects.create(user=u2, full_name="Igreja da Paz")
+        
+        assert c1.slug != c2.slug
+        assert c2.slug.startswith("igreja-da-paz")
+
+    def test_slug_usa_uuid_quando_full_name_vazio(self, db):
+        from dizimus.apps.users.models.church import Church
+        from dizimus.apps.users.models.user import User
+        
+        user = User.objects.create_user(email="igreja@teste.com", role="church")
+        church = Church.objects.create(user=user, full_name="")
+        
+        # O slug deve ser o ID (que é UUID) já que não tem nome
+        assert church.slug == str(church.id)
+
+    def test_slug_regenerado_ao_trocar_full_name(self, church):
+        slug_original = church.slug
+        church.full_name = "Igreja Batista da Paz"
+        church.save()
+        church.refresh_from_db()
+        assert church.slug != slug_original
+        assert "igreja-batista-da-paz" in church.slug
+
+    def test_slug_nao_alterado_sem_mudanca_de_nome(self, church):
+        slug_original = church.slug
+        church.phone = "+55 11 99999-8888"
+        church.save()
+        church.refresh_from_db()
+        assert church.slug == slug_original
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Church — has_name_changed
+# ─────────────────────────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+class TestChurchHasNameChanged:
+
+    def test_falso_em_nova_instancia_nao_salva(self, db):
+        from dizimus.apps.users.models.church import Church
+        from dizimus.apps.users.models.user import User
+        user = User.objects.create_user(email="novo@teste.com", role="church")
+        church = Church(user=user, full_name="Igreja Nova")
+        # _state.adding=True → nunca considera como alteração
+        assert church.has_name_changed() is False
+
+    def test_falso_quando_nome_nao_muda(self, church):
+        church.full_name = "Igreja Batista"
+        assert church.has_name_changed() is False
+
+    def test_verdadeiro_quando_full_name_muda(self, church):
+        church.full_name = "Igreja Batista da Paz"
+        assert church.has_name_changed() is True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Church — banner
 # ─────────────────────────────────────────────────────────────────────────────
 
 @pytest.mark.django_db
@@ -97,7 +195,7 @@ class TestChurchBanner:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Asaas token
+# Church — Asaas token
 # ─────────────────────────────────────────────────────────────────────────────
 
 @pytest.mark.django_db
@@ -125,7 +223,7 @@ class TestChurchAsaasToken:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# refresh_total_members
+# Church — refresh_total_members
 # ─────────────────────────────────────────────────────────────────────────────
 
 @pytest.mark.django_db
@@ -193,7 +291,7 @@ class TestRefreshTotalMembers:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CNPJ — validator (chamada direta, sem full_clean de Church)
+# Church — CNPJ (validator)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TestCnpjValidator:
@@ -220,33 +318,96 @@ class TestCnpjValidator:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# ChurchAddress — endereço principal
+# Church — phone
 # ─────────────────────────────────────────────────────────────────────────────
 
 @pytest.mark.django_db
-class TestChurchAddressPrincipal:
-    """
-    Testes adicionais específicos da Church; os comportamentos gerais de
-    BaseAddress estão em test_address.py.
-    """
+class TestChurchPhone:
 
-    def _addr(self, church, number="1", principal=True):
+    def test_normalize_phone_retorna_e164(self):
+        from dizimus.apps.users.models.church import Church
+        resultado = Church.normalize_phone("+55 11 99999-8888")
+        assert resultado == "+5511999998888"
+
+    def test_normalize_phone_com_telefone_sem_formatacao(self):
+        from dizimus.apps.users.models.church import Church
+        resultado = Church.normalize_phone("11999998888")
+        assert resultado == "+5511999998888"
+
+    def test_phone_pode_ser_definido_com_formato_internacional(self, church):
+        church.phone = "+55 11 99999-8888"
+        church.save()
+        church.refresh_from_db()
+        # O campo armazena no formato E.164
+        assert str(church.phone) == "+5511999998888"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ChurchAddress
+# ─────────────────────────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+class TestChurchAddress:
+
+    def test_endereco_criado_com_sucesso(self, church):
         from dizimus.apps.users.models.church import ChurchAddress
-        from .conftest import build_address_data
-        return ChurchAddress.objects.create(
-            church=church, **build_address_data(number=number, principal=principal)
+        addr = ChurchAddress.objects.create(
+            church=church,
+            **build_address_data()
         )
+        assert addr.pk is not None
 
-    def test_novo_endereco_principal_desativa_o_anterior(self, church):
-        a1 = self._addr(church, number="1")
-        a2 = self._addr(church, number="2")
-        a1.refresh_from_db()
-        assert a1.principal is False
-        assert a2.principal is True
+    def test_endereco_principal_por_padrao(self, church):
+        from dizimus.apps.users.models.church import ChurchAddress
+        addr = ChurchAddress.objects.create(
+            church=church,
+            **build_address_data()
+        )
+        assert addr.principal is True
 
-    def test_endereco_nao_principal_nao_toca_nos_outros(self, church):
-        a1 = self._addr(church, number="1")
-        a2 = self._addr(church, number="2", principal=False)
-        a1.refresh_from_db()
-        assert a1.principal is True    # mantido
-        assert a2.principal is False
+    def test_novo_endereco_principal_desativa_anterior(self, church):
+        from dizimus.apps.users.models.church import ChurchAddress
+        addr1 = ChurchAddress.objects.create(
+            church=church,
+            **build_address_data(number="1")
+        )
+        addr2 = ChurchAddress.objects.create(
+            church=church,
+            **build_address_data(number="2", principal=True)
+        )
+        addr1.refresh_from_db()
+        assert addr1.principal is False
+        assert addr2.principal is True
+
+    def test_apenas_um_principal_por_church(self, church):
+        from dizimus.apps.users.models.church import ChurchAddress
+        for n in ("10", "20", "30"):
+            ChurchAddress.objects.create(
+                church=church,
+                **build_address_data(number=n)
+            )
+        total_principais = ChurchAddress.objects.filter(
+            church=church, principal=True
+        ).count()
+        assert total_principais == 1
+
+    def test_str_retorna_endereco_formatado(self, church):
+        from dizimus.apps.users.models.church import ChurchAddress
+        addr = ChurchAddress.objects.create(
+            church=church,
+            **build_address_data(
+                road="Praça da Sé",
+                number="1",
+                city="São Paulo",
+                state="SP"
+            )
+        )
+        assert str(addr) == "Praça da Sé, 1 - São Paulo/SP"
+
+    def test_slug_gerado_ao_criar(self, church):
+        from dizimus.apps.users.models.church import ChurchAddress
+        addr = ChurchAddress.objects.create(
+            church=church,
+            **build_address_data()
+        )
+        assert addr.slug != ""
