@@ -6,7 +6,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.utils.html import format_html
 
-from dizimus.apps.users.models.user  import User
+from dizimus.apps.users.models.user import User
 from .actions import make_active, make_inactive, export_to_csv
 from .filters import HasPhotoFilter
 
@@ -115,7 +115,7 @@ class UserAdmin(BaseUserAdmin):
         url = obj.photo_url
         return format_html(
             '<img src="{}" width="36" height="36" '
-            'style="border-radius:50%;object-fit:cover;border:2px solid #e0e0e0;" />',
+            'style="border-radius:50%%;object-fit:cover;border:2px solid #e0e0e0;" />',
             url,
         )
 
@@ -134,7 +134,6 @@ class UserAdmin(BaseUserAdmin):
             User.UserRole.MEMBER: ("#2563eb", "#dbeafe"),
             User.UserRole.CHURCH: ("#7c3aed", "#ede9fe"),
             User.UserRole.ADMIN: ("#dc2626", "#fee2e2"),
-            
         }
         fg, bg = colors.get(obj.role, ("#374151", "#f3f4f6"))
         return format_html(

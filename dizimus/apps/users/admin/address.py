@@ -4,7 +4,7 @@ Address Admin — configuração do Django Admin para ChurchAddress e MemberAddr
 from django.contrib import admin
 from django.utils.html import format_html
 
-from dizimus.apps.users.models.member import  MemberAddress
+from dizimus.apps.users.models.member import MemberAddress
 from dizimus.apps.users.models.church import ChurchAddress
 
 
@@ -12,8 +12,8 @@ from dizimus.apps.users.models.church import ChurchAddress
 class ChurchAddressAdmin(admin.ModelAdmin):
     list_display = ("church", "full_address", "city", "state", "cep", "principal")
     list_filter = ("state", "principal")
-    search_fields = ("church__user__first_name", "church__user__last_name", "road", "city", "cep")
-    ordering = ("church__user__first_name", "city")
+    search_fields = ("church__full_name", "road", "city", "cep")  # ← Corrigido
+    ordering = ("church__full_name", "city")  # ← Corrigido
     list_per_page = 30
     readonly_fields = ("slug",)
 
@@ -46,8 +46,8 @@ class ChurchAddressAdmin(admin.ModelAdmin):
 class MemberAddressAdmin(admin.ModelAdmin):
     list_display = ("member", "full_address", "city", "state", "cep", "principal")
     list_filter = ("state", "principal")
-    search_fields = ("member__user__first_name", "member__user__last_name", "road", "city", "cep")
-    ordering = ("member__user__first_name", "city")
+    search_fields = ("member__first_name", "member__last_name", "road", "city", "cep")  # ← Corrigido
+    ordering = ("member__first_name", "city")  # ← Corrigido
     list_per_page = 30
     readonly_fields = ("slug",)
 

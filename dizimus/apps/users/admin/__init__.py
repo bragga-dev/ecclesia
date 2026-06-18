@@ -5,10 +5,10 @@ from .user import UserAdmin
 from .church import ChurchAdmin
 from .member import MemberAdmin
 from .address import ChurchAddressAdmin, MemberAddressAdmin
-# from dizimus.apps.community.models.member_church import MemberChurchAdmin
-from .filters import *  # Opcional: exporta os filtros
-from .actions import *   # Opcional: exporta as ações
-from .inlines import *   # Opcional: exporta os inlines
+from .audit_log import AuditLogAdmin
+from .filters import *
+from .actions import *
+from .inlines import *
 
 # Os registros já estão nos arquivos via @admin.register()
 # Este __init__.py apenas garante que os módulos sejam carregados

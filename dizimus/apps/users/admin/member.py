@@ -5,13 +5,10 @@ from datetime import date
 from django.contrib import admin
 from django.db.models import Count
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
-from ..models import Member
-
-from dizimus.apps.users.models.church import ChurchAddress
-from dizimus.apps.users.models.member import  MemberAddress
-from dizimus.apps.community.models.member_church_model import  MemberChurch
-
+from dizimus.apps.users.models.member import Member
+from dizimus.apps.community.models.member_church_model import MemberChurch
 
 from .actions import export_members_csv
 from .filters import AgeRangeFilter, MembershipStatusFilter, HasPhotoFilter
@@ -23,13 +20,14 @@ class MemberAdmin(admin.ModelAdmin):
     list_display = (
         "avatar_thumbnail",
         "full_name",
+        "username",
         "email",
         "cpf_masked",
         "date_of_birth",
         "age",
         "churches_count",
         "phone",
-        "primary_role",  
+        "primary_role",
     )
     list_display_links = ("avatar_thumbnail", "full_name")
     list_filter = (
@@ -39,17 +37,19 @@ class MemberAdmin(admin.ModelAdmin):
         HasPhotoFilter,
     )
     search_fields = (
-        "user__first_name",
-        "user__last_name",
+        "first_name",
+        "last_name",
+        "username",
         "user__email",
         "cpf",
     )
     autocomplete_fields = ("user",)
-    ordering = ("user__first_name",)
+    ordering = ("first_name",)
     list_per_page = 25
     save_on_top = True
     inlines = [MemberAddressInline, MemberMembershipInline]
     actions = [export_members_csv]
+    readonly_fields = ("slug",)
 
     fieldsets = (
         (
@@ -59,7 +59,14 @@ class MemberAdmin(admin.ModelAdmin):
         (
             "Dados pessoais",
             {
-                "fields": ("cpf", "date_of_birth"),
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "username",
+                    ("cpf", "date_of_birth"),
+                    "phone",
+                    "slug",
+                ),
             },
         ),
     )
@@ -69,13 +76,17 @@ class MemberAdmin(admin.ModelAdmin):
     def avatar_thumbnail(self, obj):
         return format_html(
             '<img src="{}" width="36" height="36" '
-            'style="border-radius:50%;object-fit:cover;border:2px solid #e0e0e0;" />',
+            'style="border-radius:50%%;object-fit:cover;border:2px solid #e0e0e0;" />',
             obj.user.photo_url,
         )
 
-    @admin.display(description="Nome", ordering="user__first_name")
+    @admin.display(description="Nome", ordering="first_name")
     def full_name(self, obj):
-        return obj.user.get_full_name()
+        return obj.get_full_name()
+
+    @admin.display(description="Usuário", ordering="username")
+    def username(self, obj):
+        return obj.username or "—"
 
     @admin.display(description="E-mail", ordering="user__email")
     def email(self, obj):
@@ -83,7 +94,7 @@ class MemberAdmin(admin.ModelAdmin):
 
     @admin.display(description="Telefone")
     def phone(self, obj):
-        return str(obj.user.phone) if obj.user.phone else "—"
+        return str(obj.phone) if obj.phone else "—"
 
     @admin.display(description="CPF")
     def cpf_masked(self, obj):
@@ -91,7 +102,7 @@ class MemberAdmin(admin.ModelAdmin):
             return "—"
         raw = obj.cpf.replace(".", "").replace("-", "")
         if len(raw) == 11:
-            return f"***.***. {raw[6:9]}-{raw[9:]}"
+            return f"***.***.{raw[6:9]}-{raw[9:]}"
         return obj.cpf
 
     @admin.display(description="Idade")
@@ -127,3 +138,10 @@ class MemberAdmin(admin.ModelAdmin):
             .select_related("user")
             .annotate(churches_count=Count("church_memberships"))
         )
+
+    def save_model(self, request, obj, form, change):
+        # Garante que o slug seja gerado
+        if not obj.slug:
+            obj.save()
+        else:
+            super().save_model(request, obj, form, change)

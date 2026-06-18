@@ -4,6 +4,7 @@ Church Admin — configuração do Django Admin para Church.
 from django.contrib import admin
 from django.db.models import Count, Q
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from dizimus.apps.community.models.member_church_model import MemberChurch
 from dizimus.apps.users.models.church import Church
@@ -17,31 +18,36 @@ class ChurchAdmin(admin.ModelAdmin):
     # ── Lista ────────────────────────────────────────────────────────────────
     list_display = (
         "banner_thumbnail",
-        "name",
+        "full_name_display",
         "cnpj_display",
         "verified_badge",
         "total_members",
+        "phone",
         "has_asaas_icon",
         "has_instagram",
         "has_website",
         "user__email",
+        "church_type_badge",
     )
-    list_display_links = ("banner_thumbnail", "name")
+    list_display_links = ("banner_thumbnail", "full_name_display")
     list_filter = (
         ChurchVerifiedFilter,
         HasAsaasTokenFilter,
         "user__is_active",
+        "church_type",
     )
     search_fields = (
+        "full_name",
         "user__email",
         "cnpj",
     )
-    autocomplete_fields = ("user",)
+    autocomplete_fields = ("user", "parent_church")
     ordering = ("full_name",)
     list_per_page = 20
     save_on_top = True
     inlines = [ChurchAddressInline, MemberChurchInline]
     actions = [verify_churches, unverify_churches, refresh_member_counts, export_to_csv]
+    readonly_fields = ("slug", "banner_preview")
 
     # ── Fieldsets ────────────────────────────────────────────────────────────
     fieldsets = (
@@ -53,18 +59,29 @@ class ChurchAdmin(admin.ModelAdmin):
             "Identidade",
             {
                 "fields": (
+                    "full_name",
                     "cnpj",
+                    ("church_type", "parent_church"),
                     "is_verified",
                     "total_members",
-                    "banner",
-                    "banner_preview",
+                    "slug",
+                ),
+            },
+        ),
+        (
+            "Contato",
+            {
+                "fields": (
+                    "phone",
+                    "instagram",
+                    "website",
                 ),
             },
         ),
         (
             "Sobre a Igreja",
             {
-                "fields": ("about", "instagram", "website"),
+                "fields": ("about", "banner", "banner_preview"),
                 "classes": ("collapse",),
             },
         ),
@@ -78,8 +95,6 @@ class ChurchAdmin(admin.ModelAdmin):
         ),
     )
 
-    readonly_fields = ("total_members", "banner_preview")
-
     # ── Colunas personalizadas ───────────────────────────────────────────────
     @admin.display(description="")
     def banner_thumbnail(self, obj):
@@ -89,29 +104,47 @@ class ChurchAdmin(admin.ModelAdmin):
             obj.banner_url,
         )
 
-    @admin.display(description="Igreja", ordering="user__first_name")
-    def name(self, obj):
-        return obj.user.get_full_name()
+    @admin.display(description="Igreja", ordering="full_name")
+    def full_name_display(self, obj):
+        return obj.full_name or f"Igreja {str(obj.id)[:8]}"
 
     @admin.display(description="CNPJ")
     def cnpj_display(self, obj):
         return obj.cnpj or "—"
 
-    @admin.display(description="Verificada", ordering="is_verified")
+    @admin.display(description="Telefone")
+    def phone(self, obj):
+        return str(obj.phone) if obj.phone else "—"
+
+    @admin.display(description="Tipo")
+    def church_type_badge(self, obj):
+        colors = {
+            Church.ChurchType.HEADQUARTERS: ("#1e40af", "#dbeafe"),
+            Church.ChurchType.COMMUNITY: ("#15803d", "#dcfce7"),
+            Church.ChurchType.INDEPENDENT: ("#6b7280", "#f3f4f6"),
+        }
+        fg, bg = colors.get(obj.church_type, ("#374151", "#f3f4f6"))
+        return mark_safe(
+            f'<span style="background:{bg};color:{fg};padding:2px 10px;'
+            f'border-radius:12px;font-size:11px;font-weight:600;">'
+            f'{obj.get_church_type_display()}</span>'
+        )
+
+    @admin.display(description="Verificada")  # ← Removido boolean=True
     def verified_badge(self, obj):
         if obj.is_verified:
-            return format_html(
+            return mark_safe(
                 '<span style="background:#d1fae5;color:#065f46;padding:2px 10px;'
                 'border-radius:12px;font-size:11px;font-weight:600;">✔ Verificada</span>'
             )
-        return format_html(
+        return mark_safe(
             '<span style="background:#fef3c7;color:#92400e;padding:2px 10px;'
             'border-radius:12px;font-size:11px;font-weight:600;">⏳ Pendente</span>'
         )
 
     @admin.display(description="Asaas", boolean=True)
     def has_asaas_icon(self, obj):
-        return bool(obj.asaas_token)
+        return bool(obj.asaas_token and obj.asaas_token.strip())
 
     @admin.display(description="Instagram", boolean=True)
     def has_instagram(self, obj):
@@ -136,9 +169,16 @@ class ChurchAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("user")
+            .select_related("user", "parent_church")
             .annotate(active_members=Count(
                 "member_memberships",
                 filter=Q(member_memberships__status=MemberChurch.Status.ACTIVE),
             ))
         )
+
+    def save_model(self, request, obj, form, change):
+        # Garante que o slug seja gerado
+        if not obj.slug:
+            obj.save()
+        else:
+            super().save_model(request, obj, form, change)

@@ -49,15 +49,15 @@ class AgeRangeFilter(SimpleListFilter):
         if v == "18_35":
             return queryset.filter(
                 date_of_birth__lte=age_cutoff(18),
-                date_of_birth__gt=age_cutoff(35),  # CORRIGIDO: maior que, não maior igual
+                date_of_birth__gt=age_cutoff(35),
             )
         if v == "36_60":
             return queryset.filter(
-                date_of_birth__lte=age_cutoff(36),
-                date_of_birth__gt=age_cutoff(60),  # CORRIGIDO
+                date_of_birth__lte=age_cutoff(35),  # <= 35 anos (nascidos há 35+ anos)
+                date_of_birth__gt=age_cutoff(60),   # > 60 anos (nascidos há 60 anos)
             )
         if v == "over60":
-            return queryset.filter(date_of_birth__lte=age_cutoff(60))  # CORRIGIDO
+            return queryset.filter(date_of_birth__lte=age_cutoff(60))
         if v == "unknown":
             return queryset.filter(date_of_birth__isnull=True)
         return queryset

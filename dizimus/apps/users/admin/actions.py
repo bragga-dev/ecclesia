@@ -65,16 +65,58 @@ def export_members_csv(modeladmin, request, queryset):
     response["Content-Disposition"] = 'attachment; filename="membros.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(["Nome completo", "E-mail", "CPF", "Data de nascimento", "Telefone"])
-    for m in queryset.select_related("user"):
+    writer.writerow([
+        "Nome completo",
+        "Nome de usuário",
+        "E-mail",
+        "CPF",
+        "Data de nascimento",
+        "Telefone",
+        "Igrejas vinculadas",
+    ])
+    for m in queryset.select_related("user").prefetch_related("church_memberships"):
         writer.writerow([
-            m.user.get_full_name(),
+            m.get_full_name(),
+            m.username or "—",
             m.user.email,
             m.cpf or "—",
             m.date_of_birth.strftime("%d/%m/%Y") if m.date_of_birth else "—",
-            str(m.user.phone) if m.user.phone else "—",
+            str(m.phone) if m.phone else "—",
+            m.church_memberships.count(),
         ])
     return response
 export_members_csv.short_description = "⬇ Exportar membros selecionados para CSV"
 
 
+def export_churches_csv(modeladmin, request, queryset):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="igrejas.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "Nome",
+        "CNPJ",
+        "Tipo",
+        "Verificada",
+        "Total de membros",
+        "Telefone",
+        "Instagram",
+        "Website",
+        "E-mail",
+        "Igreja pai",
+    ])
+    for c in queryset.select_related("user", "parent_church"):
+        writer.writerow([
+            c.full_name or "—",
+            c.cnpj or "—",
+            c.get_church_type_display(),
+            "Sim" if c.is_verified else "Não",
+            c.total_members,
+            str(c.phone) if c.phone else "—",
+            c.instagram or "—",
+            c.website or "—",
+            c.user.email,
+            c.parent_church.full_name if c.parent_church else "—",
+        ])
+    return response
+export_churches_csv.short_description = "⬇ Exportar igrejas selecionadas para CSV"
