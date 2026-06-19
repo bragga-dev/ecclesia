@@ -12,10 +12,8 @@ from dizimus.apps.users.schemas.users_schemas import (
     PasswordResetRequestIn,
     PasswordResetConfirmIn,
     UserOut,
-    UserUpdateIn,
-    AddressIn,
-    AddressOut,
     MessageOut,
+    UserRoleEnum,
 )
 from dizimus.apps.users.models import User
 
@@ -25,57 +23,31 @@ class TestRegisterIn:
 
     def test_valid_member_registration(self):
         data = {
-            "username": "joaosilva",
-            "first_name": "João",
-            "last_name": "Silva",
             "email": "joao@teste.com",
             "password": "SenhaForte123!",
             "password2": "SenhaForte123!",
-            "role": "member",
-            "phone": "+5511999998888"
+            "role": UserRoleEnum.MEMBER,
         }
         schema = RegisterIn(**data)
-        assert schema.username == "joaosilva"
-        assert schema.first_name == "João"
-        assert schema.last_name == "Silva"
+        assert schema.email == "joao@teste.com"
+        assert schema.role == UserRoleEnum.MEMBER
 
-    def test_valid_church_registration_without_last_name(self):
+    def test_valid_church_registration(self):
         data = {
-            "username": "igrejaamor",
-            "first_name": "Igreja Amor",
-            "last_name": None,
-            "email": "contato@igrejaamor.com",
+            "email": "contato@igreja.com",
             "password": "SenhaForte123!",
             "password2": "SenhaForte123!",
-            "role": "church",
+            "role": UserRoleEnum.CHURCH,
         }
         schema = RegisterIn(**data)
-        assert schema.role == "church"
-        assert schema.last_name is None
-
-    def test_member_requires_last_name(self):
-        data = {
-            "username": "joaosilva",
-            "first_name": "João",
-            "last_name": None,
-            "email": "joao@teste.com",
-            "password": "SenhaForte123!",
-            "password2": "SenhaForte123!",
-            "role": "member",
-        }
-        with pytest.raises(ValidationError) as exc_info:
-            RegisterIn(**data)
-        assert "Sobrenome é obrigatório para membros" in str(exc_info.value)
+        assert schema.role == UserRoleEnum.CHURCH
 
     def test_passwords_must_match(self):
         data = {
-            "username": "joaosilva",
-            "first_name": "João",
-            "last_name": "Silva",
             "email": "joao@teste.com",
             "password": "SenhaForte123!",
             "password2": "SenhaDiferente456!",
-            "role": "member",
+            "role": UserRoleEnum.MEMBER,
         }
         with pytest.raises(ValidationError) as exc_info:
             RegisterIn(**data)
@@ -83,13 +55,10 @@ class TestRegisterIn:
 
     def test_weak_password_raises_error(self):
         data = {
-            "username": "joaosilva",
-            "first_name": "João",
-            "last_name": "Silva",
             "email": "joao@teste.com",
             "password": "123",
             "password2": "123",
-            "role": "member",
+            "role": UserRoleEnum.MEMBER,
         }
         with pytest.raises(ValidationError) as exc_info:
             RegisterIn(**data)
@@ -97,33 +66,29 @@ class TestRegisterIn:
 
     def test_invalid_email_format(self):
         data = {
-            "username": "joaosilva",
-            "first_name": "João",
-            "last_name": "Silva",
             "email": "email_invalido",
             "password": "SenhaForte123!",
             "password2": "SenhaForte123!",
-            "role": "member",
+            "role": UserRoleEnum.MEMBER,
         }
         with pytest.raises(ValidationError):
             RegisterIn(**data)
 
-    def test_username_with_invalid_characters(self):
+    def test_password_too_short(self):
         data = {
-            "username": "joao@silva!",
-            "first_name": "João",
-            "last_name": "Silva",
             "email": "joao@teste.com",
-            "password": "SenhaForte123!",
-            "password2": "SenhaForte123!",
-            "role": "member",
+            "password": "1234567",
+            "password2": "1234567",
+            "role": UserRoleEnum.MEMBER,
         }
         with pytest.raises(ValidationError) as exc_info:
             RegisterIn(**data)
-        assert "Username inválido" in str(exc_info.value)
+        assert "String should have at least 8 characters" in str(exc_info.value)
 
 
 class TestLoginIn:
+    """Testes do schema de login"""
+
     def test_valid_login_data(self):
         data = {"email": "user@teste.com", "password": "senha123"}
         schema = LoginIn(**data)
@@ -132,6 +97,8 @@ class TestLoginIn:
 
 
 class TestTokenOut:
+    """Testes do schema de token"""
+
     def test_token_output(self):
         data = {"access": "token_access_123", "refresh": "token_refresh_456"}
         schema = TokenOut(**data)
@@ -140,6 +107,8 @@ class TestTokenOut:
 
 
 class TestRefreshIn:
+    """Testes do schema de refresh token"""
+
     def test_refresh_input(self):
         data = {"refresh": "refresh_token_123"}
         schema = RefreshIn(**data)
@@ -147,6 +116,8 @@ class TestRefreshIn:
 
 
 class TestChangePasswordIn:
+    """Testes do schema de alteração de senha"""
+
     def test_valid_password_change(self):
         data = {
             "old_password": "SenhaAntiga123!",
@@ -178,6 +149,8 @@ class TestChangePasswordIn:
 
 
 class TestPasswordResetRequestIn:
+    """Testes do schema de solicitação de reset de senha"""
+
     def test_valid_request(self):
         data = {"email": "user@teste.com"}
         schema = PasswordResetRequestIn(**data)
@@ -185,6 +158,8 @@ class TestPasswordResetRequestIn:
 
 
 class TestPasswordResetConfirmIn:
+    """Testes do schema de confirmação de reset de senha"""
+
     def test_valid_confirmation(self):
         data = {
             "uid": "abc123",
@@ -203,77 +178,36 @@ class TestPasswordResetConfirmIn:
             "new_password": "Senha123!",
             "new_password2": "Senha456!"
         }
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationError) as exc_info:
             PasswordResetConfirmIn(**data)
+        assert "senhas não coincidem" in str(exc_info.value).lower()
 
 
 class TestUserOut:
+    """Testes do schema de saída do usuário"""
+
     def test_user_output_serialization(self, member_user):
-        """Testa a serialização do UserOut a partir de um model User"""
         data = UserOut.from_orm(member_user)
+        
         assert data.id == member_user.id
-        assert data.username == member_user.username
         assert data.email == member_user.email
         assert data.role == member_user.role
         assert data.photo_url == member_user.photo_url
+        assert data.is_trusty == member_user.is_trusty
+        assert data.is_active == member_user.is_active
+        assert data.date_joined == member_user.date_joined
+        assert data.created_at == member_user.created_at
+        assert data.role_label == member_user.get_role_display()
 
-    def test_resolve_phone_without_phone(self, member_user):
-        member_user.phone = None
+    def test_user_out_photo_property(self, member_user):
         data = UserOut.from_orm(member_user)
-        assert data.phone is None
-
-
-class TestUserUpdateIn:
-    def test_partial_update_with_first_name_only(self):
-        data = {"first_name": "Carlos"}
-        schema = UserUpdateIn(**data)
-        assert schema.first_name == "Carlos"
-        assert schema.last_name is None
-        assert schema.username is None
-
-    def test_partial_update_with_multiple_fields(self):
-        data = {"first_name": "Carlos", "last_name": "Silva", "phone": "+5511988887777"}
-        schema = UserUpdateIn(**data)
-        assert schema.first_name == "Carlos"
-        assert schema.last_name == "Silva"
-        assert schema.phone == "+5511988887777"
-
-    def test_empty_update_is_valid(self):
-        schema = UserUpdateIn()
-        assert schema.first_name is None
-        assert schema.last_name is None
-        assert schema.username is None
-
-
-class TestAddressIn:
-    def test_valid_address(self):
-        data = {
-            "cep": "12345-678",
-            "road": "Rua das Flores",
-            "number": "123",
-            "district": "Centro",
-            "city": "São Paulo",
-            "state": "SP",
-            "principal": True
-        }
-        schema = AddressIn(**data)
-        assert schema.cep == "12345-678"
-        assert schema.state == "SP"
-
-    def test_invalid_cep_format(self):
-        data = {
-            "cep": "12345678",
-            "road": "Rua das Flores",
-            "number": "123",
-            "district": "Centro",
-            "city": "São Paulo",
-            "state": "SP",
-        }
-        with pytest.raises(ValidationError):
-            AddressIn(**data)
+        assert isinstance(data.photo_url, str)
+        assert data.photo_url != ""
 
 
 class TestMessageOut:
+    """Testes do schema de mensagem genérica"""
+
     def test_message_output(self):
         data = {"detail": "Operação realizada com sucesso"}
         schema = MessageOut(**data)
