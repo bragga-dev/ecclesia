@@ -6,6 +6,14 @@ from dizimus.apps.community.schemas.member_church_schema import(
     ChurchMemberListOut,
     ChurchMemberFilterIn,
 )
+from dizimus.apps.community.schemas.church_in_church_schema import (
+    ChurchAffiliationRequestOut,
+    ChurchAffiliationRequestIn,
+    ChurchAffiliationRequestUpdate,
+    ChurchAffiliationRequestListOut,
+    ChurchAffiliationRequestFilter,
+    ChurchAffiliationRequestAction,
+)
 
 __all__ = [
     "MemberChurchOut",
@@ -14,4 +22,10 @@ __all__ = [
     "MemberInviteOut",
     "ChurchMemberListOut",
     "ChurchMemberFilterIn",
+    "ChurchAffiliationRequestOut",
+    "ChurchAffiliationRequestIn",
+    "ChurchAffiliationRequestUpdate",
+    "ChurchAffiliationRequestListOut",
+    "ChurchAffiliationRequestFilter",
+    "ChurchAffiliationRequestAction",
 ]
