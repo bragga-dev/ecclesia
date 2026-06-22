@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Optional, Literal
 
 from ninja import Schema, Field
-
 from dizimus.apps.community.models.church_in_church_model import ChurchAffiliationRequest
 from dizimus.apps.users.schemas.church_schemas import ChurchOut
 
@@ -28,6 +27,7 @@ class ChurchAffiliationRequestOut(Schema):
     accepted_at: Optional[datetime] = None
     mode: ChurchAffiliationRequest.Mode
     mode_label: str
+    expires_at: Optional[datetime] = None
 
     @classmethod
     def from_orm(cls, church_affiliation_request: ChurchAffiliationRequest) -> "ChurchAffiliationRequestOut":
@@ -47,42 +47,31 @@ class ChurchAffiliationRequestOut(Schema):
             accepted_at=church_affiliation_request.accepted_at,
             mode_label=church_affiliation_request.get_mode_display(),
             mode=church_affiliation_request.mode,
+            expires_at=church_affiliation_request.expires_at,
         )
 
 
 # ============================================================
-# SEDE → IGREJA CADASTRADA
+# SEDE → IGREJA CADASTRADA - (ONLINE)
 # ============================================================
 class ChurchAffiliationInviteIn(Schema):
-    status: ChurchAffiliationRequest.Status = Field(default=ChurchAffiliationRequest.Status.PENDING)
-    request_type: Literal[ChurchAffiliationRequest.RequestType.INVITE]
-    mode: Literal[ChurchAffiliationRequest.Mode.AUTHENTICATED]
     message: Optional[str] = Field(None, max_length=500)
    
 
 # ============================================================
-# SEDE → IGREJA NÃO CADASTRADA
+# SEDE → IGREJA NÃO CADASTRADA - (OFFLINE)
 # ============================================================
 
 class ChurchAffiliationOfflineInviteIn(Schema):
     invited_email:str
     invited_church_full_name: str
-    code: str
-    status: ChurchAffiliationRequest.Status = Field(default=ChurchAffiliationRequest.Status.PENDING)
-    request_type: Literal[ChurchAffiliationRequest.RequestType.INVITE]
-    mode: Literal[ChurchAffiliationRequest.Mode.OFFLINE]
     message: Optional[str] = Field(None, max_length=500)
 
+
 # ============================================================
-# COMUNIDADE → SEDE
+# COMUNIDADE → SEDE (OLINE)
 # ============================================================
 class ChurchAffiliationRequestIn(Schema):
-    id: uuid.UUID
-    from_church: ChurchOut
-    to_church: ChurchOut
-    status: ChurchAffiliationRequest.Status = Field(default=ChurchAffiliationRequest.Status.PENDING)
-    request_type: Literal[ChurchAffiliationRequest.RequestType.REQUEST]
-    mode: Literal[ChurchAffiliationRequest.Mode.AUTHENTICATED]
     message: Optional[str] = Field(None, max_length=500)
     
 
@@ -113,6 +102,7 @@ class ChurchAffiliationRequestListOut(Schema):
     mode: ChurchAffiliationRequest.Mode
     created_at: datetime
     accepted_at: Optional[datetime]
+    expires_at: Optional[str]
 
     @classmethod
     def from_orm(cls, church_affiliation_request: ChurchAffiliationRequest) -> "ChurchAffiliationRequestListOut":
@@ -128,6 +118,7 @@ class ChurchAffiliationRequestListOut(Schema):
             status_label=church_affiliation_request.get_status_display(),
             created_at=church_affiliation_request.created_at,
             accepted_at=church_affiliation_request.accepted_at,
+            expires_at=church_affiliation_request.expires_at,
         )
 
 
@@ -138,11 +129,12 @@ class ChurchAffiliationRequestListOut(Schema):
 class ChurchAffiliationRequestFilter(Schema):
     status: Optional[list[ChurchAffiliationRequest.Status]] = None
     request_type: Optional[list[ChurchAffiliationRequest.RequestType]] = None
+
     created_after: Optional[datetime] = None
     created_before: Optional[datetime] = None
-    query: Optional[str] = None  
-    church_id: Optional[uuid.UUID] = None  
-
+    expires_at: Optional[datetime] = None
+    church_id: Optional[uuid.UUID] = None
+   
 
 # ============================================================
 # AÇÕES
@@ -159,7 +151,6 @@ class ChurchAffiliationRequestAction(Schema):
 # ============================================================
 
 class ChurchAffiliationCodeLookupIn(Schema):
-
     code: str
 
 

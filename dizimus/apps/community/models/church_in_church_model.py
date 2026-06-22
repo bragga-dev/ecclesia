@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from dizimus.apps.users.models.church import Church
 from dizimus.apps.community.utils.generate_code import _generate_code
-
+from dizimus.apps.community.utils.default_expiration import _default_expiration
 
 
 
@@ -27,8 +27,8 @@ class ChurchAffiliationRequest(models.Model):
         REQUEST = "request", "Solicitação"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    from_church = models.ForeignKey(Church, on_delete=models.PROTECT, null=True, blank=True, related_name="sent_affiliation_requests",)
-    to_church = models.ForeignKey(Church, on_delete=models.PROTECT, related_name="received_affiliation_requests",)
+    from_church = models.ForeignKey(Church, on_delete=models.PROTECT, related_name="sent_affiliation_requests",)
+    to_church = models.ForeignKey(Church, on_delete=models.PROTECT, null=True, blank=True, related_name="received_affiliation_requests",)
     invited_email = models.EmailField(null=True, blank=True, max_length=100) 
     invited_church_full_name = models.CharField(max_length=255, null=True, blank=True)  
     request_type = models.CharField(max_length=20, choices=RequestType.choices,)
@@ -38,6 +38,7 @@ class ChurchAffiliationRequest(models.Model):
     message = models.TextField(null=True,  blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True, default=None)
 
     class Meta:
         verbose_name = "Solicitação de Afiliação"
@@ -53,17 +54,9 @@ class ChurchAffiliationRequest(models.Model):
 
     def __str__(self):
         if self.invited_church_full_name:
-            return f"{self.get_request_type_display()} de {self.from_church} para {self.invited_church_name} ({self.get_status_display()})"
+            return f"{self.get_request_type_display()} de {self.from_church} para {self.invited_church_full_name} ({self.get_status_display()})"
         return f"{self.get_request_type_display()} de {self.from_church} para {self.to_church} ({self.get_status_display()})"
 
-    def _generate_unique_code(self, length: int = 12) -> str:
-        """Gera um código único, tentando até encontrar um não usado."""
-        max_attempts = 10
-        for attempt in range(max_attempts):
-            code = _generate_code(length)
-            if not ChurchAffiliationRequest.objects.filter(code=code).exists():
-                return code
-        return str(uuid.uuid4())[:12]
     
     def accept(self):
         """Aceita a solicitação de afiliação."""
@@ -97,15 +90,29 @@ class ChurchAffiliationRequest(models.Model):
         from django.utils import timezone
         return timezone.now() > self.expires_at
     
-    def save(self, *args, **kwargs):
-        # Gera código apenas se não existir e for uma nova instância
-        if not self.code and not self.pk:
-            self.code = self._generate_unique_code()
+def save(self, *args, **kwargs):    
+    if self.mode == self.Mode.OFFLINE:        
+        if self.expires_at is None:
+            self.expires_at = _default_expiration()
         
-        # Se tem expires_at, mas não foi definido, define para 7 dias
-        if not self.expires_at and self.pk is None:
-            from django.utils import timezone
-            import datetime
-            self.expires_at = timezone.now() + datetime.timedelta(days=7)
-        
-        super().save(*args, **kwargs)
+        if not self.code:
+            self.code = _generate_code()
+    
+    elif self.mode == self.Mode.AUTHENTICATED:
+        self.expires_at = None
+        self.code = None
+    
+    if self.mode == self.Mode.OFFLINE:
+        if not self.invited_email:
+            raise ValidationError("Offline invites require invited_email")
+        if not self.invited_church_full_name:
+            raise ValidationError("Offline invites require invited_church_full_name")
+        if self.to_church:
+            raise ValidationError("Offline invites cannot have to_church")
+    
+    elif self.mode == self.Mode.AUTHENTICATED:
+        if not self.to_church:
+            raise ValidationError("Authenticated requests require to_church")
+        if self.invited_email or self.invited_church_full_name:
+            raise ValidationError("Authenticated requests cannot have offline fields")
+    super().save(*args, **kwargs)
