@@ -14,11 +14,7 @@ def user_factory(db):
         defaults = {
             "email": "teste@teste.com",
             "password": "SenhaForte123!",
-            "username": "testuser",
-            "first_name": "Teste",
-            "last_name": "User",
             "role": "member",
-            "phone": "+5511999998888",  # <-- ADICIONAR PHONE
         }
         defaults.update(kwargs)
         return create_user(**defaults)
@@ -30,11 +26,7 @@ def member_user(db, user_factory):
     """Cria um usuário do tipo member com seu perfil"""
     user = user_factory(
         email="membro@teste.com",
-        username="membro",
-        first_name="João",
-        last_name="Silva",
         role="member",
-        phone="+5511999998888"
     )
     member = create_member_profile(user)
     return user
@@ -45,11 +37,7 @@ def church_user(db, user_factory):
     """Cria um usuário do tipo church com seu perfil"""
     user = user_factory(
         email="igreja@teste.com",
-        username="igreja",
-        first_name="Igreja",
-        last_name="Teste",
         role="church",
-        phone="+5511988887777"
     )
     church = create_church_profile(user)
     return user
