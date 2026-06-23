@@ -90,29 +90,29 @@ class ChurchAffiliationRequest(models.Model):
         from django.utils import timezone
         return timezone.now() > self.expires_at
     
-def save(self, *args, **kwargs):    
-    if self.mode == self.Mode.OFFLINE:        
-        if self.expires_at is None:
-            self.expires_at = _default_expiration()
+    def save(self, *args, **kwargs):    
+        if self.mode == self.Mode.OFFLINE:        
+            if self.expires_at is None:
+                self.expires_at = _default_expiration()
+            
+            if not self.code:
+                self.code = _generate_code()
         
-        if not self.code:
-            self.code = _generate_code()
-    
-    elif self.mode == self.Mode.AUTHENTICATED:
-        self.expires_at = None
-        self.code = None
-    
-    if self.mode == self.Mode.OFFLINE:
-        if not self.invited_email:
-            raise ValidationError("Offline invites require invited_email")
-        if not self.invited_church_full_name:
-            raise ValidationError("Offline invites require invited_church_full_name")
-        if self.to_church:
-            raise ValidationError("Offline invites cannot have to_church")
-    
-    elif self.mode == self.Mode.AUTHENTICATED:
-        if not self.to_church:
-            raise ValidationError("Authenticated requests require to_church")
-        if self.invited_email or self.invited_church_full_name:
-            raise ValidationError("Authenticated requests cannot have offline fields")
-    super().save(*args, **kwargs)
+        elif self.mode == self.Mode.AUTHENTICATED:
+            self.expires_at = None
+            self.code = None
+        
+        if self.mode == self.Mode.OFFLINE:
+            if not self.invited_email:
+                raise ValidationError("Offline invites require invited_email")
+            if not self.invited_church_full_name:
+                raise ValidationError("Offline invites require invited_church_full_name")
+            if self.to_church:
+                raise ValidationError("Offline invites cannot have to_church")
+        
+        elif self.mode == self.Mode.AUTHENTICATED:
+            if not self.to_church:
+                raise ValidationError("Authenticated requests require to_church")
+            if self.invited_email or self.invited_church_full_name:
+                raise ValidationError("Authenticated requests cannot have offline fields")
+        super().save(*args, **kwargs)

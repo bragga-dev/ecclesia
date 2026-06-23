@@ -313,10 +313,7 @@ def has_pending_affiliation_with_church(
     ).exists()
 
 
-def is_church_already_affiliated(
-    from_church_id: uuid.UUID,
-    to_church_id: uuid.UUID
-) -> bool:
+def is_church_already_affiliated(from_church_id: uuid.UUID, to_church_id: uuid.UUID) -> bool:
     """Verifica se duas igrejas já são afiliadas."""
     return ChurchAffiliationRequest.objects.filter(
         Q(
