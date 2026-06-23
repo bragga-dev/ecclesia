@@ -119,8 +119,10 @@ def get_address_by_id_and_member(
 
 
 # ── Search ────────────────────────────────────────────────────────────────────
-
 def search_members(search: str):
+    search = search.strip()
+    if not search:
+        return Member.objects.none()
     return Member.objects.filter(
         Q(first_name__icontains=search) |
         Q(last_name__icontains=search) |
