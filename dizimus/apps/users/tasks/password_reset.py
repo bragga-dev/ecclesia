@@ -2,7 +2,8 @@
 Tasks Celery — redefinição de senha.
 """
 import logging
-
+from django.utils.html import strip_tags
+from django.template.loader import render_to_string
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -20,69 +21,26 @@ def send_password_reset_email(self, user_id: str, uid: str, token: str) -> None:
         from dizimus.apps.users.models.user import User
 
         user = User.objects.get(pk=user_id)
-        reset_url = f"{settings.FRONTEND_URL}/redefinir-senha/{uid}/{token}/"
+        reset_url = f"{settings.FRONTEND_URL}/redefinir-senha/{uid}/{token}"
 
         logger.info("Password reset URL generated: %s", reset_url)
 
-        text_message = (
-            f"Olá, {user.email}!\n\n"
-            "Clique no link abaixo para redefinir sua senha:\n\n"
-            f"{reset_url}\n\n"
-            "O link expira em 1 hora. Se não foi você, ignore este e-mail."
-        )
+        context = {           
+            "user_email":user.email,
+            "reset_url":reset_url,
+            "user_full_name": f"{user.member.first_name} {user.member.last_name}",
+        }
 
-        html_message = f"""
-        <html>
-            <body>
-                <h2>Redefinição de senha</h2>
-
-                <p>
-                    Olá, {user.email}!
-                </p>
-
-                <p>
-                    Clique no botão abaixo para redefinir sua senha:
-                </p>
-
-                <p>
-                    <a
-                        href="{reset_url}"
-                        style="
-                            background:#2563eb;
-                            color:white;
-                            padding:12px 20px;
-                            border-radius:8px;
-                            text-decoration:none;
-                            display:inline-block;
-                        "
-                    >
-                        Redefinir senha
-                    </a>
-                </p>
-
-                <p>
-                    Ou copie este link:
-                </p>
-
-                <p>
-                    {reset_url}
-                </p>
-
-                <p style="color:#6b7280; font-size:14px;">
-                    O link expira em 1 hora.
-                    Se não foi você, ignore este e-mail.
-                </p>
-            </body>
-        </html>
-        """
+        html_content = render_to_string("users/emails/password_reset.html", context,)
+        text_content = strip_tags(html_content)       
 
         email = EmailMultiAlternatives(
             subject="Redefinição de senha — Ecclesia",
-            body=text_message,
+            body=text_content,
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[user.email],
         )
-        email.attach_alternative(html_message, "text/html")
+        email.attach_alternative(html_content, "text/html")
         email.send(fail_silently=False)
 
         logger.info("Password reset email sent to %s", user.email)
