@@ -78,7 +78,7 @@ def register_member_by_church(
     )
 
     from dizimus.apps.users.tasks.member_invite import send_member_invite_email
-    send_member_invite_email.delay(str(user.pk), temp_password)
+    send_member_invite_email.delay(str(user.pk), temp_password, church.id)
 
     return user.member
 
