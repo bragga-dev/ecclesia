@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from dizimus.apps.users.exceptions import PermissionDenied
 from dizimus.apps.users.api.auth import router as auth_router
 from dizimus.apps.users.api import router as users_router
-from dizimus.apps.community.api.member_church_router.member_church_router import router as church_members_router
+from dizimus.apps.community.api import router as community_router
 from dizimus.apps.users.api.admin import router as admin_router
 
 api = NinjaAPI(
@@ -25,7 +25,7 @@ api = NinjaAPI(
 
 api.add_router("/auth/", auth_router, tags=["Auth"])
 api.add_router("/users/", users_router, tags=["Users"])
-api.add_router("/churches/", church_members_router, tags=["Churches"])
+api.add_router("/churches/", community_router, tags=["Churches"])
 api.add_router("/admin/", admin_router, tags=["Admin"])
 
 # ── Handlers de erro globais ──────────────────────────────────────────────────

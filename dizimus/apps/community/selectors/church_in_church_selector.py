@@ -4,6 +4,9 @@ from dizimus.apps.community.schemas.church_in_church_schema import ChurchAffilia
 from dizimus.apps.community.models import ChurchAffiliationRequest
 from datetime import timezone, timedelta
 from typing import Optional
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from dizimus.apps.users.models.church import Church
 
 # ── Busca individual ────────────────────────────────────────────────────────────────────
 
@@ -417,4 +420,156 @@ def get_affiliation_requests_with_prefetch(
             "invited_church_full_name"
         )
         .order_by("-created_at")
+    )
+
+# ── Validações de Negócio ──────────────────────────────────────────────────
+
+def validate_church_can_send_invite(church: Church) -> None:
+    """
+    Valida se uma igreja pode enviar convites.
+    Apenas igrejas SEDE/Matriz ativas podem enviar convites.
+    """
+    if church.church_type != Church.ChurchType.HEADQUARTERS:
+        raise ValidationError("Apenas Igrejas Sede/Matriz podem enviar convites.")
+    
+    if not church.user.is_active:
+        raise ValidationError("Não é possível enviar convite de uma igreja inativa.")
+
+
+def validate_church_can_receive_invite(church: Church) -> None:
+    """
+    Valida se uma igreja pode receber convites.
+    Apenas igrejas COMUNIDADE ativas podem receber convites.
+    """
+    if church.church_type != Church.ChurchType.COMMUNITY:
+        raise ValidationError("Só é possível convidar igrejas do tipo Comunidade.")
+    
+    if not church.user.is_active:
+        raise ValidationError("Não é possível enviar convite para uma igreja inativa.")
+
+
+def validate_church_can_request_affiliation(church: Church) -> None:
+    """
+    Valida se uma igreja pode solicitar afiliação.
+    Apenas igrejas COMUNIDADE ativas podem solicitar afiliação.
+    """
+    if church.church_type != Church.ChurchType.COMMUNITY:
+        raise ValidationError("Apenas igrejas do tipo Comunidade podem solicitar afiliação.")
+    
+    if not church.user.is_active:
+        raise ValidationError("Não é possível enviar solicitação de uma igreja inativa.")
+
+
+def validate_church_can_be_requested(church: Church) -> None:
+    """
+    Valida se uma igreja pode receber solicitação de afiliação.
+    Apenas igrejas SEDE/Matriz ativas podem receber solicitações.
+    """
+    if church.church_type != Church.ChurchType.HEADQUARTERS:
+        raise ValidationError("Uma Comunidade só pode se afiliar a uma Igreja Sede/Matriz.")
+    
+    if not church.user.is_active:
+        raise ValidationError("Não é possível solicitar afiliação a uma igreja inativa.")
+
+
+def validate_no_self_affiliation(from_church_id: uuid.UUID, to_church_id: uuid.UUID) -> None:
+    """Valida se uma igreja não está tentando se afiliar a si mesma."""
+    if from_church_id == to_church_id:
+        raise ValidationError("Uma igreja não pode enviar uma solicitação para si mesma.")
+
+
+def validate_no_existing_affiliation(from_church_id: uuid.UUID, to_church_id: uuid.UUID) -> None:
+    """Valida se não existe afiliação ativa entre as igrejas."""
+    if is_church_already_affiliated(from_church_id, to_church_id):
+        raise ValidationError("As igrejas já possuem uma afiliação ativa.")
+
+
+def validate_no_pending_affiliation(from_church_id: uuid.UUID, to_church_id: uuid.UUID) -> None:
+    """Valida se não existe solicitação pendente em nenhum dos sentidos."""
+    if has_pending_affiliation_with_church(from_church_id, to_church_id):
+        raise ValidationError("Já existe uma solicitação pendente entre estas igrejas.")
+    
+    if has_pending_affiliation_with_church(to_church_id, from_church_id):
+        raise ValidationError("A igreja destino já possui uma solicitação pendente para a igreja origem.")
+
+
+def validate_offline_invite_email(email: str) -> None:
+    """Valida se o email é válido."""
+    try:
+        validate_email(email)
+    except ValidationError:
+        raise ValidationError("Email inválido!")
+
+
+def validate_no_pending_offline_invite_for_email(email: str) -> None:
+    """Valida se não existe convite offline pendente para este email."""
+    if ChurchAffiliationRequest.objects.filter(
+        invited_email__iexact=email,
+        mode=ChurchAffiliationRequest.Mode.OFFLINE,
+        status=ChurchAffiliationRequest.Status.PENDING
+    ).exists():
+        raise ValidationError("Já existe um convite pendente para este email.")
+
+
+def validate_church_name_not_exists(full_name: str) -> None:
+    """Valida se já não existe uma igreja com este nome."""
+    if Church.objects.filter(full_name__iexact=full_name).exists():
+        raise ValidationError("Já existe uma igreja cadastrada com este nome.")
+
+
+def validate_church_not_already_affiliated_by_name(from_church: Church, full_name: str) -> None:
+    """
+    Valida se uma igreja com este nome já não está afiliada à from_church.
+    """
+    existing_church = Church.objects.filter(full_name__iexact=full_name).first()
+    if existing_church:
+        if is_church_already_affiliated(from_church.id, existing_church.id):
+            raise ValidationError("Esta igreja já está afiliada.")
+        if has_pending_affiliation_with_church(from_church.id, existing_church.id):
+            raise ValidationError("Já existe uma solicitação pendente para esta igreja.")
+
+
+def validate_church_can_be_offline_invited(from_church: Church, invited_email: str, invited_church_full_name: str) -> None:
+    """
+    Validação completa para convite offline.
+    """
+    validate_church_can_send_invite(from_church)
+    validate_offline_invite_email(invited_email)
+    validate_no_pending_offline_invite_for_email(invited_email)
+    validate_church_name_not_exists(invited_church_full_name)
+    validate_church_not_already_affiliated_by_name(from_church, invited_church_full_name)
+
+
+def validate_church_can_authenticated_invite(from_church: Church, to_church: Church) -> None:
+    """
+    Validação completa para convite autenticado.
+    """
+    validate_no_self_affiliation(from_church.id, to_church.id)
+    validate_church_can_send_invite(from_church)
+    validate_church_can_receive_invite(to_church)
+    validate_no_existing_affiliation(from_church.id, to_church.id)
+    validate_no_pending_affiliation(from_church.id, to_church.id)
+
+
+def validate_church_can_affiliation_request(from_church: Church, to_church: Church) -> None:
+    """
+    Validação completa para solicitação de afiliação.
+    """
+    validate_no_self_affiliation(from_church.id, to_church.id)
+    validate_church_can_request_affiliation(from_church)
+    validate_church_can_be_requested(to_church)
+    validate_no_existing_affiliation(from_church.id, to_church.id)
+    validate_no_pending_affiliation(from_church.id, to_church.id)
+
+def get_church_affiliation_request_by_id(affiliation_id: uuid.UUID) -> ChurchAffiliationRequest | None:
+    return (
+        ChurchAffiliationRequest.objects
+        .select_related(
+            "from_church",
+            "from_church__user",
+            "to_church",
+            "to_church__user",
+        )
+        .filter(id=affiliation_id)
+        .first()
     )
