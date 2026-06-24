@@ -3,7 +3,8 @@ Tasks Celery — verificação de email.
 """
 
 from celery import shared_task
-
+from django.utils.html import strip_tags
+from django.template.loader import render_to_string
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth.tokens import default_token_generator
@@ -36,102 +37,35 @@ def send_verification_email(self, user_id: str) -> None:
 
         user = User.objects.get(pk=user_id)
 
-        uid = urlsafe_base64_encode(
-            force_bytes(user.pk)
-        )
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
 
-        token = default_token_generator.make_token(
-            user
-        )
+        verify_url = (f"{settings.BACKEND_URL}"f"/api/users/verify-email/"f"{uid}/"f"{token}")
+        logger.info("Verification URL generated: %s", verify_url,)
 
-        verify_url = (
-            f"{settings.BACKEND_URL}"
-            f"/api/users/verify-email/"
-            f"{uid}/"
-            f"{token}"
-        )
+        context = {
+            "user_email": user.email,
+            "verify_url":verify_url,
+        }
 
-        logger.info(
-            "Verification URL generated: %s",
-            verify_url,
-        )
-
-        text_message = (
-            f"Olá, {user.email}!\n\n"
-            "Clique no link abaixo para confirmar seu e-mail:\n\n"
-            f"{verify_url}\n\n"
-            "Se você não criou esta conta, ignore esta mensagem."
-        )
-
-        html_message = f"""
-        <html>
-            <body>
-
-                <h2>Confirme seu e-mail</h2>
-
-                <p>
-                    Olá, {user.email}!
-                </p>
-
-                <p>
-                    Clique no botão abaixo:
-                </p>
-
-                <p>
-                    <a
-                        href="{verify_url}"
-                        style="
-                            background:#2563eb;
-                            color:white;
-                            padding:12px 20px;
-                            border-radius:8px;
-                            text-decoration:none;
-                            display:inline-block;
-                        "
-                    >
-                        Confirmar e-mail
-                    </a>
-                </p>
-
-                <p>
-                    Ou copie este link:
-                </p>
-
-                <p>
-                    {verify_url}
-                </p>
-
-            </body>
-        </html>
-        """
+        html_content = render_to_string("users/emails/verification_email.html", context,)
+        text_content = strip_tags(html_content)     
 
         email = EmailMultiAlternatives(
             subject="Confirme seu e-mail — Ecclesia",
-            body=text_message,
+            body=text_content,
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[user.email],
         )
 
-        email.attach_alternative(
-            html_message,
-            "text/html",
-        )
+        email.attach_alternative(html_content, "text/html",)
 
-        email.send(
-            fail_silently=False
-        )
+        email.send(fail_silently=False)
 
-        logger.info(
-            "Verification email sent to %s",
-            user.email,
-        )
+        logger.info("Verification email sent to %s", user.email,)
 
     except Exception as exc:
 
-        logger.exception(
-            "Error sending verification email"
-        )
+        logger.exception("Error sending verification email")
 
-        raise self.retry(
-            exc=exc
-        )
+        raise self.retry(exc=exc)
