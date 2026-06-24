@@ -53,6 +53,7 @@ def send_affiliation_invite_email(self, church_affiliation_id: uuid.UUID) -> Non
             "from_church_instagram": affiliation.from_church.instagram,
             "from_church_about": affiliation.from_church.about,
             "code": affiliation.code,
+            "message": affiliation.message,
             "from_church_phone":affiliation.from_church.phone,
             "request_id": affiliation.id,
             "created_at": affiliation.created_at,
