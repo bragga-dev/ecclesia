@@ -28,7 +28,6 @@ def send_password_reset_email(self, user_id: str, uid: str, token: str) -> None:
         context = {           
             "user_email":user.email,
             "reset_url":reset_url,
-            "user_full_name": f"{user.member.first_name} {user.member.last_name}",
         }
 
         html_content = render_to_string("users/emails/password_reset.html", context,)
