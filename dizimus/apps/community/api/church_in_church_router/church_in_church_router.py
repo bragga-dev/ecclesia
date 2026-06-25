@@ -23,7 +23,7 @@ from dizimus.apps.community.schemas.church_in_church_schema import (
 
 )
 from dizimus.apps.community.services.church_in_church_service import (
-    create_affiliation_between_church,
+    create_affiliation_request,
     create_offline_invite,
     create_authenticated_invite,
 )
@@ -100,43 +100,34 @@ def create_church_offline_invite(
     )
 
 
-# # ============================================================
-# # COMUNIDADE → SEDE (ONLINE) - SOLICITAR AFILIAÇÃO
-# # ============================================================
-# @router.post(
-#     "/church/affiliation/request",
-#     auth=ChurchOnlyAuth(),
-#     response={201: ChurchAffiliationRequestOut, 409: MessageOut},
-#     summary="Igreja Comunidade solicita afiliação a uma Sede/Matriz",
-#     description=(
-#         "Uma igreja do tipo Comunidade pode solicitar afiliação "
-#         "a uma igreja do tipo Sede/Matriz. A solicitação fica pendente "
-#         "até que a sede aceite ou rejeite."
-#     ),
-# )
-# @ratelimit(key="user", rate="30/m", block=True)
-# def create_church_affiliation_request(
-#     request, 
-#     payload: ChurchAffiliationRequestIn,
-#     to_church_id: uuid.UUID,
-# ):
-#     from_church = request.auth.church
+# ============================================================
+# COMUNIDADE → SEDE (ONLINE) - SOLICITAR AFILIAÇÃO
+# ============================================================
+@router.post(
+    "/church/affiliation/request",
+    auth=ChurchOnlyAuth(),
+    response={201: ChurchAffiliationRequestOut, 409: MessageOut},
+    summary="Igreja Comunidade solicita afiliação a uma Sede/Matriz",
+    description=(
+        "Uma igreja do tipo Comunidade pode solicitar afiliação "
+        "a uma igreja do tipo Sede/Matriz. A solicitação fica pendente "
+        "até que a sede aceite ou rejeite."
+    ),
+)
+@ratelimit(key="user", rate="30/m", block=True)
+def create_church_affiliation_request(request,  payload: ChurchAffiliationRequestIn, to_church_id: uuid.UUID,):
+    from_church_id = request.auth.church.id
     
-#     # Busca a igreja destino (sede)
-#     to_church = Church.objects.filter(id=to_church_id).first()
-#     if not to_church:
-#         return 409, {"detail": "Igreja sede não encontrada."}
-    
-#     try:
-#         church_affiliation = create_affiliation_request(
-#             from_church=from_church,
-#             to_church=to_church,
-#             message=payload.message
-#         )
-#     except ValidationError as e:
-#         return 409, {"detail": str(e)}
+    try:
+        church_affiliation = create_affiliation_request(
+            from_church_id=from_church_id,
+            to_church_id=to_church_id,
+            message=payload.message
+        )
+    except ValidationError as e:
+        return 409, {"detail": str(e)}
 
-#     return 201, ChurchAffiliationRequestOut.from_orm(church_affiliation)
+    return 201, ChurchAffiliationRequestOut.from_orm(church_affiliation)
 
 
 # # ============================================================

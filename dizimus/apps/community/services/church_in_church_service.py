@@ -18,13 +18,9 @@ from dizimus.apps.users.selectors.church_selector import get_church_by_id
 
 from dizimus.apps.community.tasks.send_affiliation_offline_invite import send_affiliation_offline_invite
 from dizimus.apps.community.tasks.send_affiliation_online_invite import send_affiliation_online_invite
+from dizimus.apps.community.tasks.send_affiliation_request import send_affiliation_request
 
-def create_authenticated_invite(
-    *,
-    from_church_id: uuid.UUID,
-    to_church_id: uuid.UUID,
-    message: str | None = None,
-) -> ChurchAffiliationRequest:
+def create_authenticated_invite(*, from_church_id: uuid.UUID, to_church_id: uuid.UUID,  message: str | None = None,) -> ChurchAffiliationRequest:
 
     from_church = get_church_by_id(church_id=from_church_id)
     to_church = get_church_by_id(church_id=to_church_id)
@@ -67,24 +63,24 @@ def create_offline_invite(*, from_church: Church, message: str | None = None, in
         message=message,
        
     )
-
     send_affiliation_offline_invite.delay(invite.id)
     return invite
     
 
-def create_affiliation_request(
-    *, 
-    from_church: Church, 
-    to_church: Church, 
-    message: str | None = None
-) -> ChurchAffiliationRequest:
+def create_affiliation_request(*, from_church_id: uuid.UUID, to_church_id: uuid.UUID, message: str | None = None) -> ChurchAffiliationRequest:
     """Cria uma solicitação de afiliação de uma comunidade para uma sede."""
-    if not get_church_by_id(church_id=to_church.id):
-        raise ValueError("Igreja não encontrada")
+    from_church = get_church_by_id(church_id=from_church_id)
+    to_church = get_church_by_id(church_id=to_church_id)
+
+    if not from_church:
+            raise ValidationError("Igreja origem não encontrada")
+
+    if not to_church:
+        raise ValidationError("Igreja destino não encontrada")
     
     validate_church_can_affiliation_request(from_church, to_church)
     
-    return create_affiliation_between_church(
+    invite =  create_affiliation_between_church(
         from_church=from_church,
         to_church=to_church,
         request_type=ChurchAffiliationRequest.RequestType.REQUEST,
@@ -92,3 +88,5 @@ def create_affiliation_request(
         mode=ChurchAffiliationRequest.Mode.AUTHENTICATED,
         message=message,
     )
+    send_affiliation_request.delay(invite.id)
+    return invite
