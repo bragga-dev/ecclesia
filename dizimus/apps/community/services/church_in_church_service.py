@@ -16,7 +16,8 @@ from dizimus.apps.community.selectors.church_in_church_selector import (
 )
 from dizimus.apps.users.selectors.church_selector import get_church_by_id
 
-from dizimus.apps.community.tasks.send_affiliation_invite_email import send_affiliation_invite_email
+from dizimus.apps.community.tasks.send_affiliation_offline_invite import send_affiliation_offline_invite
+from dizimus.apps.community.tasks.send_affiliation_online_invite import send_affiliation_online_invite
 
 def create_authenticated_invite(
     *,
@@ -39,14 +40,20 @@ def create_authenticated_invite(
         to_church=to_church,
     )
 
-    return create_affiliation_between_church(
+    invite =  create_affiliation_between_church(
         from_church=from_church,
         to_church=to_church,
         request_type=ChurchAffiliationRequest.RequestType.INVITE,
         status=ChurchAffiliationRequest.Status.PENDING,
         mode=ChurchAffiliationRequest.Mode.AUTHENTICATED,
-        message=message,
+        message=message,   
     )
+
+    send_affiliation_online_invite.delay(invite.id)
+    return invite
+
+
+
 def create_offline_invite(*, from_church: Church, message: str | None = None, invited_email: str, invited_church_full_name: str) -> ChurchAffiliationRequest:
     """Cria um convite offline para uma igreja que ainda não está no sistema."""
     validate_church_can_be_offline_invited(from_church, invited_email, invited_church_full_name)
@@ -61,7 +68,7 @@ def create_offline_invite(*, from_church: Church, message: str | None = None, in
        
     )
 
-    send_affiliation_invite_email.delay(invite.id)
+    send_affiliation_offline_invite.delay(invite.id)
     return invite
     
 

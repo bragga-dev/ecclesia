@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
     retry_kwargs={"max_retries": 3},
     default_retry_delay=60,
 )
-def send_affiliation_invite_email(self, church_affiliation_id: uuid.UUID) -> None:
+def send_affiliation_online_invite(self, church_affiliation_id: uuid.UUID) -> None:
     """
     Envia email notificando uma igreja que recebeu
     um convite de afiliação.
@@ -42,7 +42,7 @@ def send_affiliation_invite_email(self, church_affiliation_id: uuid.UUID) -> Non
 
         frontend_url = getattr(settings,"FRONTEND_URL", "http://localhost:5173",)
 
-        invitation_url = (f"{frontend_url}/dashboard/community/affiliations/"f"{affiliation.code or affiliation.id}")
+        invitation_url = (f"{frontend_url}/dashboard/community/affiliations/"f"{affiliation.id}")
 
         context = {
             "from_church_name": affiliation.from_church.full_name,
@@ -52,45 +52,32 @@ def send_affiliation_invite_email(self, church_affiliation_id: uuid.UUID) -> Non
             "from_church_website": affiliation.from_church.website,
             "from_church_instagram": affiliation.from_church.instagram,
             "from_church_about": affiliation.from_church.about,
-            "code": affiliation.code,
             "message": affiliation.message,
             "from_church_phone":affiliation.from_church.phone,
             "request_id": affiliation.id,
             "created_at": affiliation.created_at,
-            "expires_at": affiliation.expires_at,
             "banner_url": affiliation.from_church.banner_url,
             "invitation_url": invitation_url,
         }
 
-        html_content = render_to_string("community/emails/affiliation_invite.html", context,)
+        html_content = render_to_string("community/emails/affiliation_online_invite.html", context,)
 
         text_content = strip_tags(html_content)
 
         email = EmailMultiAlternatives(
-            subject="Nova Solicitação de Afiliação",
+            subject="Solicitação de Afiliação",
             body=text_content,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[
-                affiliation.invited_email,
-            ],
+            to=[affiliation.to_church.user.email,],
         )
 
         email.attach_alternative(html_content, "text/html",)
 
         email.send(fail_silently=False)
 
-        logger.info(
-            "Affiliation invite email sent. "
-            "request_id=%s from=%s to=%s",
-            affiliation.id,
-            affiliation.from_church.id,
-            affiliation.invited_church_full_name,
-        )
+        logger.info("Affiliation invite email sent. ""request_id=%s from=%s to=%s", affiliation.id,
+            affiliation.from_church.id, affiliation.invited_church_full_name,)
 
     except Exception as exc:
-        logger.exception(
-            "Error sending affiliation invite email. "
-            "request_id=%s",
-            church_affiliation_id,
-        )
+        logger.exception("Error sending affiliation invite email. ""request_id=%s", church_affiliation_id,)
         raise self.retry(exc=exc)
