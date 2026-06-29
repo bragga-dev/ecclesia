@@ -427,10 +427,10 @@ def get_affiliation_requests_with_prefetch(
 def validate_church_can_send_invite(church: Church) -> None:
     """
     Valida se uma igreja pode enviar convites.
-    Apenas igrejas SEDE/Matriz ativas podem enviar convites.
+    Apenas igrejas Paróquia ativas podem enviar convites.
     """
-    if church.church_type != Church.ChurchType.HEADQUARTERS:
-        raise ValidationError("Apenas Igrejas Sede/Matriz podem enviar convites.")
+    if church.church_type != Church.ChurchType.PARISH:
+        raise ValidationError("Apenas Igrejas Paróquia podem enviar convites.")
     
     if not church.user.is_active:
         raise ValidationError("Não é possível enviar convite de uma igreja inativa.")
@@ -463,10 +463,10 @@ def validate_church_can_request_affiliation(church: Church) -> None:
 def validate_church_can_be_requested(church: Church) -> None:
     """
     Valida se uma igreja pode receber solicitação de afiliação.
-    Apenas igrejas SEDE/Matriz ativas podem receber solicitações.
+    Apenas igrejas Paróquia ativas podem receber solicitações.
     """
-    if church.church_type != Church.ChurchType.HEADQUARTERS:
-        raise ValidationError("Uma Comunidade só pode se afiliar a uma Igreja Sede/Matriz.")
+    if church.church_type != Church.ChurchType.PARISH:
+        raise ValidationError("Uma Comunidade só pode se afiliar a uma Igreja Paróquia.")
     
     if not church.user.is_active:
         raise ValidationError("Não é possível solicitar afiliação a uma igreja inativa.")

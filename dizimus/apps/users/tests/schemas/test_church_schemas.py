@@ -46,11 +46,11 @@ class TestChurchCreateIn:
             "user_id": "123e4567-e89b-12d3-a456-426614174000",
             "full_name": "Igreja Nova",
             "cnpj": "12.345.678/0001-95",
-            "church_type": ChurchTypeEnum.HEADQUARTERS,
+            "church_type": ChurchTypeEnum.PARISH,
         }
         schema = ChurchCreateIn(**data)
         assert schema.full_name == "Igreja Nova"
-        assert schema.church_type == ChurchTypeEnum.HEADQUARTERS
+        assert schema.church_type == ChurchTypeEnum.PARISH
 
     def test_valid_create_without_cnpj(self):
         data = {

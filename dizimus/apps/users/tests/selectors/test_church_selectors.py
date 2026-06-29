@@ -52,7 +52,7 @@ class BaseChurchSelectorTest(TestCase):
             user=cls.user,
             cnpj="16.196.634/0001-00",
             full_name="Igreja Central",
-            church_type=Church.ChurchType.HEADQUARTERS,
+            church_type=Church.ChurchType.PARISH,
             is_verified=True,
         )
 
@@ -212,7 +212,7 @@ class TestChurchSelectors(BaseChurchSelectorTest):
 
     def test_get_churches_by_type_headquarters(self):
         """Deve retornar igrejas por tipo (sede)."""
-        result = get_churches_by_type(Church.ChurchType.HEADQUARTERS)
+        result = get_churches_by_type(Church.ChurchType.PARISH)
         self.assertEqual(result.count(), 1)
         self.assertEqual(result.first().id, self.church.id)
 

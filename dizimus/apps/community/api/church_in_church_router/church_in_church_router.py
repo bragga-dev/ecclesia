@@ -39,9 +39,9 @@ router = Router(tags=["Churches"])
 @router.post("/church/affiliation/invite/{to_church_id}",
     auth=ChurchOnlyAuth(),
     response={201: ChurchAffiliationRequestOut, 409: MessageOut},
-    summary="Igreja Sede/Matriz envia convite de afiliação",
+    summary="Igreja Paróquia envia convite de afiliação",
     description=(
-        "Uma igreja do tipo Sede/Matriz pode enviar um convite de afiliação "
+        "Uma igreja do tipo Paróquia pode enviar um convite de afiliação "
         "para uma igreja do tipo Comunidade. O convite fica pendente até que "
         "a igreja convidada o aceite ou rejeite."
     ),
@@ -64,9 +64,9 @@ def create_church_affiliation_invite(request, payload: ChurchAffiliationInviteIn
     "/church/affiliation/offline-invite",
     auth=ChurchOnlyAuth(),
     response={201: ChurchAffiliationOfflineInviteOut, 409: MessageOut},
-    summary="Igreja Sede/Matriz envia convite offline",
+    summary="Igreja Paróquia envia convite offline",
     description=(
-        "Uma igreja do tipo Sede/Matriz pode enviar um convite offline "
+        "Uma igreja do tipo Paróquia pode enviar um convite offline "
         "para uma igreja que ainda não está cadastrada no sistema."
     ),
 )
@@ -107,10 +107,10 @@ def create_church_offline_invite(
     "/church/affiliation/request",
     auth=ChurchOnlyAuth(),
     response={201: ChurchAffiliationRequestOut, 409: MessageOut},
-    summary="Igreja Comunidade solicita afiliação a uma Sede/Matriz",
+    summary="Igreja Comunidade solicita afiliação a uma Paróquia",
     description=(
         "Uma igreja do tipo Comunidade pode solicitar afiliação "
-        "a uma igreja do tipo Sede/Matriz. A solicitação fica pendente "
+        "a uma igreja do tipo Paróquia. A solicitação fica pendente "
         "até que a sede aceite ou rejeite."
     ),
 )

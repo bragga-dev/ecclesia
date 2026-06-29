@@ -29,7 +29,7 @@ DEFAULT_CHURCH_BANNER = "default/banner.jpg"
 
 class Church(models.Model):
     class ChurchType(models.TextChoices):
-        HEADQUARTERS = "headquarters", "Sede/Matriz"
+        PARISH = "parish", "Paróquia"
         COMMUNITY = "community", "Comunidade"
         INDEPENDENT = "independent", "Independente"
 
@@ -119,8 +119,8 @@ class Church(models.Model):
         if self.parent_church and self.parent_church_id == self.pk:
             raise ValidationError("Uma igreja não pode ser pai de si mesma.")
         
-        if self.parent_church and self.church_type == self.ChurchType.HEADQUARTERS:
-            raise ValidationError("Uma sede/matriz não pode ter igreja pai.")
+        if self.parent_church and self.church_type == self.ChurchType.PARISH:
+            raise ValidationError("Uma paróquia não pode ter igreja pai.")
         
         if self.parent_church and self.church_type == self.ChurchType.INDEPENDENT:
             raise ValidationError("Uma igreja independente não pode ter igreja pai.")
