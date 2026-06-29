@@ -2,6 +2,7 @@
 Roles - Funções que verificam o tipo e estado do usuário.
 """
 from dizimus.apps.users.models import User
+from dizimus.apps.community.models.member_church_model import MemberChurch
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

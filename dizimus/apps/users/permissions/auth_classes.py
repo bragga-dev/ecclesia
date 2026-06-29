@@ -11,10 +11,10 @@ DEFAULT_CHURCH_BANNER = "default/banner.jpg"
 class ChurchOnlyAuth(JWTAuth):
     def authenticate(self, request, token):
         user = super().authenticate(request, token)
+        if user and not is_verified(user):  # Verificar email PRIMEIRO
+            raise PermissionDenied("Verifique seu e-mail para acessar.")
         if user and not is_admin(user) and not is_church(user):
             raise PermissionDenied("Apenas igrejas podem acessar este recurso.")
-        if user and not is_verified(user):
-            raise PermissionDenied("Verifique seu e-mail para acessar.")
         return user
 
 class ChurchCompleteProfileAuth(JWTAuth):
@@ -65,10 +65,10 @@ class ChurchCompleteProfileAuth(JWTAuth):
 class MemberOnlyAuth(JWTAuth):
     def authenticate(self, request, token):
         user = super().authenticate(request, token)
+        if user and not is_admin(user) and not is_verified(user):  # Verificar email PRIMEIRO
+            raise PermissionDenied("Verifique seu e-mail para acessar.")
         if user and not is_admin(user) and not is_member(user):
             raise PermissionDenied("Apenas membros podem acessar este recurso.")
-        if user and not is_verified(user):
-            raise PermissionDenied("Verifique seu e-mail para acessar.")
         return user
 
 
