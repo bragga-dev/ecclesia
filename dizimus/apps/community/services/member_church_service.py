@@ -104,11 +104,7 @@ def list_member_church_service(church_id: uuid.UUID,  *,  status: str | None = M
 
 
 
-def update_member_church_service(
-    member_church_id: uuid.UUID, 
-    church_id: uuid.UUID,
-    **fields
-) -> MemberChurch:
+def update_member_church_service(member_church_id: uuid.UUID, church_id: uuid.UUID,  **fields) -> MemberChurch:
     if not fields:
         raise ValueError("Nenhum campo fornecido para atualização")
     member_church = get_member_church(member_church_id, church_id)
