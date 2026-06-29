@@ -1,4 +1,4 @@
-# Dizimus
+# Ecclesia
 
 > Sistema de gestão de igrejas
 
@@ -13,12 +13,12 @@
 
 ## Stack
 
-| Camada | Tecnologias |
-|--------|------------|
-| **Backend** | Django · Django Ninja · Pydantic · Celery |
-| **Banco de Dados** | PostgreSQL |
-| **Cache / Fila** | Redis |
-| **Armazenamento** | MinIO (S3 Compatible) |
+| Camada             | Tecnologias                                             |
+| ------------------ | ------------------------------------------------------- |
+| **Backend**        | Django · Django Ninja · Pydantic · Celery               |
+| **Banco de Dados** | PostgreSQL                                              |
+| **Cache / Fila**   | Redis                                                   |
+| **Armazenamento**  | MinIO (S3 Compatible)                                   |
 | **Infraestrutura** | Docker · Docker Compose · Nginx · Gunicorn · Whitenoise |
 
 ---
@@ -28,7 +28,7 @@
 ### Estrutura de Diretórios
 
 ```
-dizimus/
+ecclesia/
 │
 ├── .env
 ├── .env.example
@@ -232,20 +232,20 @@ apps/users/
 
 ## Responsabilidade dos Arquivos
 
-| Arquivo | Camada | Responsabilidade |
-|---------|--------|-----------------|
-| `models.py` | Dados | Modelos do banco de dados |
-| `repositories.py` | Dados | Persistência e acesso ao banco |
-| `selectors.py` | Dados | Queries e leitura de dados |
-| `schemas.py` | API | Schemas do Django Ninja / Pydantic |
-| `api.py` | API | Endpoints da API |
-| `filters.py` | API | Filtros de consulta |
-| `permissions.py` | API | Controle de permissões |
-| `services.py` | Negócio | Regras de negócio |
-| `tasks.py` | Negócio | Tarefas assíncronas do Celery |
-| `signals.py` | Negócio | Eventos do Django |
-| `constants.py` | Infra | Constantes do domínio |
-| `exceptions.py` | Infra | Exceções customizadas |
+| Arquivo           | Camada  | Responsabilidade                   |
+| ----------------- | ------- | ---------------------------------- |
+| `models.py`       | Dados   | Modelos do banco de dados          |
+| `repositories.py` | Dados   | Persistência e acesso ao banco     |
+| `selectors.py`    | Dados   | Queries e leitura de dados         |
+| `schemas.py`      | API     | Schemas do Django Ninja / Pydantic |
+| `api.py`          | API     | Endpoints da API                   |
+| `filters.py`      | API     | Filtros de consulta                |
+| `permissions.py`  | API     | Controle de permissões             |
+| `services.py`     | Negócio | Regras de negócio                  |
+| `tasks.py`        | Negócio | Tarefas assíncronas do Celery      |
+| `signals.py`      | Negócio | Eventos do Django                  |
+| `constants.py`    | Infra   | Constantes do domínio              |
+| `exceptions.py`   | Infra   | Exceções customizadas              |
 
 ---
 
@@ -283,10 +283,10 @@ celery -A config worker -l info
 
 ## MinIO
 
-| Interface | URL |
-|-----------|-----|
+| Interface             | URL                     |
+| --------------------- | ----------------------- |
 | Painel Administrativo | `http://localhost:9001` |
-| Endpoint S3 | `http://localhost:9000` |
+| Endpoint S3           | `http://localhost:9000` |
 
 ---
 
@@ -302,9 +302,9 @@ celery -A config worker -l info
 
 O projeto utiliza:
 
-* `pytest`
-* `pytest-django`
-* `pytest-cov`
+- `pytest`
+- `pytest-django`
+- `pytest-cov`
 
 ---
 
@@ -337,7 +337,7 @@ pytest
 ## Rodar testes com coverage
 
 ```bash
-pytest --cov=dizimus --cov-report=term-missing
+pytest --cov=ecclesia --cov-report=term-missing
 ```
 
 ---
@@ -347,13 +347,13 @@ pytest --cov=dizimus --cov-report=term-missing
 ### Users
 
 ```bash
-pytest dizimus/apps/users/tests/
+pytest ecclesia/apps/users/tests/
 ```
 
 ### Community
 
 ```bash
-pytest dizimus/apps/community/tests/
+pytest ecclesia/apps/community/tests/
 ```
 
 ---
@@ -363,19 +363,19 @@ pytest dizimus/apps/community/tests/
 ### Schemas
 
 ```bash
-pytest dizimus/apps/users/tests/schemas/
+pytest ecclesia/apps/users/tests/schemas/
 ```
 
 ### Models
 
 ```bash
-pytest dizimus/apps/users/tests/models/
+pytest ecclesia/apps/users/tests/models/
 ```
 
 ### Services
 
 ```bash
-pytest dizimus/apps/users/tests/services/
+pytest ecclesia/apps/users/tests/services/
 ```
 
 ---
@@ -385,8 +385,8 @@ pytest dizimus/apps/users/tests/services/
 ## Schemas
 
 ```bash
-pytest dizimus/apps/users/tests/schemas/ \
-    --cov=dizimus.apps.users.schemas \
+pytest ecclesia/apps/users/tests/schemas/ \
+    --cov=ecclesia.apps.users.schemas \
     --cov-report=term-missing
 ```
 
@@ -395,8 +395,8 @@ pytest dizimus/apps/users/tests/schemas/ \
 ## Models
 
 ```bash
-pytest dizimus/apps/users/tests/models/ \
-    --cov=dizimus.apps.users.models \
+pytest ecclesia/apps/users/tests/models/ \
+    --cov=ecclesia.apps.users.models \
     --cov-report=term-missing
 ```
 
@@ -405,8 +405,8 @@ pytest dizimus/apps/users/tests/models/ \
 ## Validators
 
 ```bash
-pytest dizimus/apps/users/tests/validators/ \
-    --cov=dizimus.apps.users.validators \
+pytest ecclesia/apps/users/tests/validators/ \
+    --cov=ecclesia.apps.users.validators \
     --cov-report=term-missing
 ```
 
@@ -415,8 +415,8 @@ pytest dizimus/apps/users/tests/validators/ \
 ## Services
 
 ```bash
-pytest dizimus/apps/users/tests/services/ \
-    --cov=dizimus.apps.users.services \
+pytest ecclesia/apps/users/tests/services/ \
+    --cov=ecclesia.apps.users.services \
     --cov-report=term-missing
 ```
 
@@ -465,7 +465,7 @@ pytest path/to/test_file.py
 Exemplo:
 
 ```bash
-pytest dizimus/apps/users/tests/models/test_user.py
+pytest ecclesia/apps/users/tests/models/test_user.py
 ```
 
 ---
@@ -479,7 +479,7 @@ pytest path/to/test_file.py::TestClassName
 Exemplo:
 
 ```bash
-pytest dizimus/apps/users/tests/models/test_user.py::TestUserModel
+pytest ecclesia/apps/users/tests/models/test_user.py::TestUserModel
 ```
 
 ---
@@ -493,7 +493,7 @@ pytest path/to/test_file.py::TestClassName::test_method_name
 Exemplo:
 
 ```bash
-pytest dizimus/apps/users/tests/models/test_user.py::TestUserModel::test_create_user
+pytest ecclesia/apps/users/tests/models/test_user.py::TestUserModel::test_create_user
 ```
 
 ---
@@ -503,7 +503,7 @@ pytest dizimus/apps/users/tests/models/test_user.py::TestUserModel::test_create_
 Gerar relatório HTML:
 
 ```bash
-pytest --cov=dizimus --cov-report=html
+pytest --cov=ecclesia --cov-report=html
 ```
 
 Abrir relatório:
@@ -546,14 +546,14 @@ apps/
 
 # Boas práticas
 
-* Testar regras de negócio antes de testar interface/admin.
-* Priorizar testes de:
+- Testar regras de negócio antes de testar interface/admin.
+- Priorizar testes de:
+  - services
+  - validators
+  - models
+  - autenticação
+  - permissões
 
-  * services
-  * validators
-  * models
-  * autenticação
-  * permissões
-* Utilizar factories e fixtures reutilizáveis.
-* Evitar testes frágeis baseados em textos HTML.
-* Manter coverage acima de 80%.
+- Utilizar factories e fixtures reutilizáveis.
+- Evitar testes frágeis baseados em textos HTML.
+- Manter coverage acima de 80%.

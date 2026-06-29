@@ -55,7 +55,7 @@ services:
   # =========================================================
   celery:
     build: .
-    command: celery -A dizimus.config worker -l info
+    command: celery -A ecclesia.config worker -l info
     working_dir: /app
     volumes:
       - .:/app
@@ -77,7 +77,7 @@ services:
   # =========================================================
   celery-beat:
     build: .
-    command: celery -A dizimus.config beat -l info
+    command: celery -A ecclesia.config beat -l info
     working_dir: /app
     volumes:
       - .:/app
@@ -152,10 +152,10 @@ services:
         mc admin user add local "$MINIO_APP_USER" "$MINIO_APP_PASSWORD" || true
 
         # ── 5. Política de acesso restrito (lida do arquivo) ────────
-        mc admin policy create local dizimus-app-policy \
+        mc admin policy create local ecclesia-app-policy \
           /policy/app-policy.json || true
 
-        mc admin policy attach local dizimus-app-policy \
+        mc admin policy attach local ecclesia-app-policy \
           --user "$MINIO_APP_USER"
 
         # ── 6. Upload de arquivos padrão ───────────────────────────

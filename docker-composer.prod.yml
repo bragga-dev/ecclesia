@@ -22,7 +22,7 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-dizimus}
+      POSTGRES_DB: ${POSTGRES_DB:-ecclesia}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
@@ -85,9 +85,9 @@ services:
     entrypoint: >
       /bin/sh -c "
       mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
-      mc mb --ignore-existing local/${MINIO_BUCKET_MEDIA:-dizimus-media};
-      mc mb --ignore-existing local/${MINIO_BUCKET_STATIC:-dizimus-static};
-      mc anonymous set download local/${MINIO_BUCKET_STATIC:-dizimus-static};
+      mc mb --ignore-existing local/${MINIO_BUCKET_MEDIA:-ecclesia-media};
+      mc mb --ignore-existing local/${MINIO_BUCKET_STATIC:-ecclesia-static};
+      mc anonymous set download local/${MINIO_BUCKET_STATIC:-ecclesia-static};
       exit 0;
       "
     env_file: .env
