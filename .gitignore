@@ -23,4 +23,8 @@ staticfiles/
 *.override.yml
 
 # DB
-*.sqlite3
+*.sqlite3venv/
+.coverage
+venv/
+.coverage
+venv/
