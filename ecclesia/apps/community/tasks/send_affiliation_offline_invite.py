@@ -8,10 +8,7 @@ import uuid
 from celery import shared_task
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-
+from ecclesia.apps.users.utils.email_service import EmailService
 from ecclesia.apps.community.selectors.church_in_church_selector import (
     get_church_affiliation_request_by_id,
 )
@@ -61,23 +58,12 @@ def send_affiliation_offline_invite(self, church_affiliation_id: uuid.UUID) -> N
             "banner_url": affiliation.from_church.banner_url,
             "invitation_url": invitation_url,
         }
-
-        html_content = render_to_string("community/emails/affiliation_offline_invite.html", context,)
-
-        text_content = strip_tags(html_content)
-
-        email = EmailMultiAlternatives(
+        EmailService.send_html_email(
             subject="Nova Solicitação de Afiliação",
-            body=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[
-                affiliation.invited_email,
-            ],
+            to_email=affiliation.invited_email,
+            template_name="community/emails/affiliation_offline_invite.html",
+            context=context,
         )
-
-        email.attach_alternative(html_content, "text/html",)
-
-        email.send(fail_silently=False)
 
         logger.info(
             "Affiliation invite email sent. "
@@ -88,9 +74,5 @@ def send_affiliation_offline_invite(self, church_affiliation_id: uuid.UUID) -> N
         )
 
     except Exception as exc:
-        logger.exception(
-            "Error sending affiliation invite email. "
-            "request_id=%s",
-            church_affiliation_id,
-        )
+        logger.exception("Error sending affiliation invite email. " "request_id=%s",  church_affiliation_id,)
         raise self.retry(exc=exc)

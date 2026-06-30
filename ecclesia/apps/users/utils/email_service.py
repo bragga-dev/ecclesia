@@ -12,13 +12,7 @@ class EmailService:
     """Serviço centralizado para envio de emails."""
     
     @staticmethod
-    def send_html_email(
-        subject: str,
-        to_email: str,
-        template_name: str,
-        context: Dict[str, Any],
-        from_email: Optional[str] = None,
-    ) -> None:
+    def send_html_email(subject: str, to_email: str, template_name: str, context: Dict[str, Any], from_email: Optional[str] = None,) -> None:
         """Envia email com HTML e fallback para texto."""
         if from_email is None:
             from_email = settings.DEFAULT_FROM_EMAIL
