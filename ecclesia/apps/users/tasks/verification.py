@@ -1,19 +1,11 @@
 """
 Tasks Celery — verificação de email.
 """
-
-from celery import shared_task
-from django.utils.html import strip_tags
-from django.template.loader import render_to_string
-from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
-from ecclesia.apps.users.models.user import User
-
 import logging
-
+from celery import shared_task
+from ecclesia.apps.users.models.user import User
+from ecclesia.apps.users.utils.email_service import EmailService
+from ecclesia.apps.users.utils.token_service import TokenService
 
 logger = logging.getLogger(__name__)
 
@@ -32,41 +24,28 @@ def send_verification_email(self, user_id: str) -> None:
     - token do Django
     - e-mail HTML + fallback texto
     """
-
     try:
-        
-
         user = User.objects.get(pk=user_id)
-
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
-        verify_url = (f"{settings.BACKEND_URL}"f"/api/users/verify-email/"f"{uid}/"f"{token}")
-        logger.info("Verification URL generated: %s", verify_url,)
+        
+        uid, token = TokenService.generate_verification_data(user)
+        verify_url = TokenService.build_verification_url(uid, token)
+        
+        logger.info("Verification URL generated: %s", verify_url)
 
         context = {
             "user_email": user.email,
-            "verify_url":verify_url,
+            "verify_url": verify_url,
         }
 
-        html_content = render_to_string("users/emails/verification_email.html", context,)
-        text_content = strip_tags(html_content)     
-
-        email = EmailMultiAlternatives(
+        EmailService.send_html_email(
             subject="Confirme seu e-mail — Ecclesia",
-            body=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[user.email],
+            to_email=user.email,
+            template_name="users/emails/verification_email.html",
+            context=context,
         )
 
-        email.attach_alternative(html_content, "text/html",)
-
-        email.send(fail_silently=False)
-
-        logger.info("Verification email sent to %s", user.email,)
+        logger.info("Verification email sent to %s", user.email)
 
     except Exception as exc:
-
         logger.exception("Error sending verification email")
-
         raise self.retry(exc=exc)

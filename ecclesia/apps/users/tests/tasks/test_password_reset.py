@@ -25,44 +25,34 @@ class TestSendPasswordResetEmail:
         self.uid = "dGVzdC11aWQ"
         self.token = "test-token"
 
-    @patch("ecclesia.apps.users.tasks.password_reset.render_to_string")
-    @patch("ecclesia.apps.users.tasks.password_reset.EmailMultiAlternatives")
-    @patch("ecclesia.apps.users.tasks.password_reset.logger")
-    def test_send_password_reset_email_success(self, mock_logger, mock_email_class, mock_render):
+    @patch('ecclesia.apps.users.tasks.password_reset.TokenService')
+    @patch('ecclesia.apps.users.tasks.password_reset.EmailService')
+    @patch('ecclesia.apps.users.tasks.password_reset.logger')
+    def test_send_password_reset_email_success(self, mock_logger, mock_email_service, mock_token_service):
         """Testa envio de e-mail de redefinição de senha com sucesso."""
-        html_content = "<html>Reset email content</html>"
-        mock_render.return_value = html_content
-
-        mock_email_instance = MagicMock()
-        mock_email_class.return_value = mock_email_instance
+        # Configurar mock
+        mock_token_service.build_password_reset_url.return_value = (
+            f"{settings.FRONTEND_URL}/redefinir-senha/{self.uid}/{self.token}"
+        )
 
         send_password_reset_email(self.user.id, self.uid, self.token)
 
-        template_name = mock_render.call_args[0][0]
-        assert template_name == "users/emails/password_reset.html"
+        # Verificar se TokenService foi chamado corretamente
+        mock_token_service.build_password_reset_url.assert_called_once_with(self.uid, self.token)
 
-        context = mock_render.call_args[0][1]
-        assert context["user_email"] == self.user.email
-        assert context["reset_url"] == (
-            f"{settings.FRONTEND_URL}/redefinir-senha/{self.uid}/{self.token}"
-        )
+        # Verificar se EmailService foi chamado corretamente
+        mock_email_service.send_html_email.assert_called_once()
+        call_args = mock_email_service.send_html_email.call_args[1]
+        assert call_args["subject"] == "Redefinição de senha — Ecclesia"
+        assert call_args["to_email"] == self.user.email
+        assert call_args["template_name"] == "users/emails/password_reset.html"
+        assert call_args["context"]["user_email"] == self.user.email
+        assert call_args["context"]["reset_url"] == mock_token_service.build_password_reset_url.return_value
 
-        expected_text_body = strip_tags(html_content)
-        mock_email_class.assert_called_once_with(
-            subject="Redefinição de senha — Ecclesia",
-            body=expected_text_body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[self.user.email],
-        )
-
-        mock_email_instance.attach_alternative.assert_called_once_with(
-            html_content, "text/html"
-        )
-        mock_email_instance.send.assert_called_once_with(fail_silently=False)
-
+        # Verificar logs
         mock_logger.info.assert_any_call(
             "Password reset URL generated: %s",
-            f"{settings.FRONTEND_URL}/redefinir-senha/{self.uid}/{self.token}"
+            mock_token_service.build_password_reset_url.return_value
         )
         mock_logger.info.assert_any_call(
             "Password reset email sent to %s",
@@ -71,28 +61,28 @@ class TestSendPasswordResetEmail:
 
     def test_send_password_reset_email_user_not_found(self):
         """Testa comportamento quando usuário não é encontrado."""
-        # Mock o método retry para levantar Retry imediatamente
-        with patch.object(send_password_reset_email, 'retry', side_effect=Retry()):
-            with patch.object(User.objects, "get", side_effect=User.DoesNotExist):
+        with patch.object(User.objects, "get", side_effect=User.DoesNotExist):
+            with patch.object(send_password_reset_email, 'retry', side_effect=Retry()):
                 with pytest.raises(Retry):
                     send_password_reset_email(str(uuid.uuid4()), self.uid, self.token)
 
-    @patch("ecclesia.apps.users.tasks.password_reset.logger")
-    @patch("ecclesia.apps.users.tasks.password_reset.render_to_string")
-    @patch("ecclesia.apps.users.tasks.password_reset.EmailMultiAlternatives")
-    def test_send_password_reset_email_retry_on_failure(self, mock_email_class, mock_render, mock_logger):
+    @patch('ecclesia.apps.users.tasks.password_reset.TokenService')
+    @patch('ecclesia.apps.users.tasks.password_reset.EmailService')
+    @patch('ecclesia.apps.users.tasks.password_reset.logger')
+    def test_send_password_reset_email_retry_on_failure(self, mock_logger, mock_email_service, mock_token_service):
         """Testa que a task tenta novamente em caso de falha no envio."""
-        # Mock o método retry para levantar Retry imediatamente
+        # Configurar mock
+        mock_token_service.build_password_reset_url.return_value = (
+            f"{settings.FRONTEND_URL}/redefinir-senha/{self.uid}/{self.token}"
+        )
+        
+        # Simular falha no envio do email
+        mock_email_service.send_html_email.side_effect = Exception("SMTP error")
+
+        # Mockar o método retry da task
         with patch.object(send_password_reset_email, 'retry', side_effect=Retry()):
-            with patch.object(User.objects, "get", return_value=self.user):
-                mock_render.return_value = "<html>Reset email content</html>"
+            with pytest.raises(Retry):
+                send_password_reset_email(self.user.id, self.uid, self.token)
 
-                mock_email_instance = MagicMock()
-                mock_email_instance.send.side_effect = Exception("SMTP error")
-                mock_email_class.return_value = mock_email_instance
-
-                with pytest.raises(Retry):
-                    send_password_reset_email(self.user.id, self.uid, self.token)
-
-                mock_logger.exception.assert_called_once()
-                assert "Error sending password reset email" in mock_logger.exception.call_args[0][0]
+            mock_logger.exception.assert_called_once()
+            assert "Error sending password reset email" in mock_logger.exception.call_args[0][0]

@@ -1,4 +1,3 @@
-# tests/tasks/test_member_invite.py
 """
 Testes para a task send_member_invite_email.
 """
@@ -6,8 +5,8 @@ import uuid
 from unittest.mock import patch, MagicMock
 
 import pytest
+from celery.exceptions import Retry
 from django.conf import settings
-from django.utils.html import strip_tags
 from ecclesia.apps.users.models.user import User
 from ecclesia.apps.users.models.church import Church
 from ecclesia.apps.users.tasks.member_invite import send_member_invite_email
@@ -35,56 +34,50 @@ class TestSendMemberInviteEmail:
             email="member@example.com",
             password="test123"
         )
-
         self.member_user.is_active = True
         self.member_user.save()
 
         self.temp_password = "TempPass123!"
         self.church_id = self.church.id
 
-    @patch('ecclesia.apps.users.tasks.member_invite.render_to_string')
-    @patch('ecclesia.apps.users.tasks.member_invite.EmailMultiAlternatives')
+    @patch('ecclesia.apps.users.tasks.member_invite.TokenService')
+    @patch('ecclesia.apps.users.tasks.member_invite.EmailService')
     @patch('ecclesia.apps.users.tasks.member_invite.logger')
-    def test_send_member_invite_email_success(self, mock_logger, mock_email_class, mock_render):
+    def test_send_member_invite_email_success(self, mock_logger, mock_email_service, mock_token_service):
         """Testa envio de e-mail de convite de membro com sucesso."""
-        mock_render.return_value = "<html>Invite email content</html>"
-
-        mock_email_instance = MagicMock()
-        mock_email_class.return_value = mock_email_instance
+        # Configurar mocks
+        mock_token_service.generate_verification_data.return_value = ("dGVzdC11aWQ=", "test-token")
+        mock_token_service.build_verification_url.return_value = (
+            f"{settings.BACKEND_URL}/api/users/verify-email/dGVzdC11aWQ=/test-token"
+        )
 
         send_member_invite_email(self.member_user.id, self.temp_password, self.church_id)
 
-        mock_render.assert_called_once()
-        template_name = mock_render.call_args[0][0]
-        assert template_name == "users/emails/member_invite.html"
+        # Verificar se TokenService foi chamado corretamente
+        mock_token_service.generate_verification_data.assert_called_once_with(self.member_user)
+        mock_token_service.build_verification_url.assert_called_once_with("dGVzdC11aWQ=", "test-token")
 
-        call_args = mock_render.call_args[0][1]
-        assert set(call_args.keys()) == {
-            "member_email", "temp_password", "verify_url", "church_name", "church_banner"
-        }
-        assert call_args["member_email"] == self.member_user.email
-        assert call_args["temp_password"] == self.temp_password
-        assert call_args["church_name"] == self.church.full_name
-        assert call_args["church_banner"] == self.church.banner_url
-        assert call_args["verify_url"].startswith(
-            f"{settings.BACKEND_URL}/api/users/verify-email/"
+        # Verificar se EmailService foi chamado corretamente
+        mock_email_service.send_html_email.assert_called_once()
+        call_args = mock_email_service.send_html_email.call_args[1]
+        assert call_args["subject"] == "Bem-vindo à Ecclesia — Confirme seu e-mail"
+        assert call_args["to_email"] == self.member_user.email
+        assert call_args["template_name"] == "users/emails/member_invite.html"
+        assert call_args["context"]["member_email"] == self.member_user.email
+        assert call_args["context"]["temp_password"] == self.temp_password
+        assert call_args["context"]["church_name"] == self.church.full_name
+        assert call_args["context"]["church_banner"] == self.church.banner_url
+        assert call_args["context"]["verify_url"] == mock_token_service.build_verification_url.return_value
+
+        # Verificar logs
+        mock_logger.info.assert_any_call(
+            "Member invite URL generated: %s",
+            mock_token_service.build_verification_url.return_value
         )
-
-        expected_text_body = strip_tags(mock_render.return_value)
-        mock_email_class.assert_called_once_with(
-            subject="Bem-vindo à Ecclesia — Confirme seu e-mail",
-            body=expected_text_body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[self.member_user.email],
+        mock_logger.info.assert_any_call(
+            "Member invite email sent to %s",
+            self.member_user.email
         )
-
-        mock_email_instance.attach_alternative.assert_called_once_with(
-            mock_render.return_value, "text/html"
-        )
-
-        mock_email_instance.send.assert_called_once_with(fail_silently=False)
-
-        mock_logger.info.assert_any_call("Member invite email sent to %s", self.member_user.email)
 
     @patch('ecclesia.apps.users.models.user.User.objects.get')
     @patch('ecclesia.apps.users.tasks.member_invite.logger')
@@ -110,38 +103,43 @@ class TestSendMemberInviteEmail:
         mock_logger.exception.assert_called_once()
         assert "Error sending member invite email" in mock_logger.exception.call_args[0][0]
 
-    @patch('ecclesia.apps.users.tasks.member_invite.render_to_string')
-    @patch('ecclesia.apps.users.tasks.member_invite.EmailMultiAlternatives')
+    @patch('ecclesia.apps.users.tasks.member_invite.TokenService')
+    @patch('ecclesia.apps.users.tasks.member_invite.EmailService')
     @patch('ecclesia.apps.users.tasks.member_invite.logger')
-    def test_send_member_invite_email_retry_on_failure(self, mock_logger, mock_email_class, mock_render):
-        """Testa que a task propaga a falha de envio (acionando retry do Celery)."""
-        mock_render.return_value = "<html>Invite email content</html>"
+    def test_send_member_invite_email_retry_on_failure(self, mock_logger, mock_email_service, mock_token_service):
+        """Testa que a task tenta novamente em caso de falha no envio."""
+        # Configurar mocks
+        mock_token_service.generate_verification_data.return_value = ("dGVzdC11aWQ=", "test-token")
+        mock_token_service.build_verification_url.return_value = (
+            f"{settings.BACKEND_URL}/api/users/verify-email/dGVzdC11aWQ=/test-token"
+        )
+        
+        # Simular falha no envio do email
+        mock_email_service.send_html_email.side_effect = Exception("SMTP error")
 
-        mock_email_instance = MagicMock()
-        mock_email_instance.send.side_effect = Exception("SMTP error")
-        mock_email_class.return_value = mock_email_instance
+        # Mockar o método retry da task
+        with patch.object(send_member_invite_email, 'retry', side_effect=Retry()):
+            with pytest.raises(Retry):
+                send_member_invite_email(self.member_user.id, self.temp_password, self.church_id)
 
-        with pytest.raises(Exception, match="SMTP error"):
-            send_member_invite_email(self.member_user.id, self.temp_password, self.church_id)
+            mock_logger.exception.assert_called_once()
+            assert "Error sending member invite email" in mock_logger.exception.call_args[0][0]
 
-        mock_logger.exception.assert_called_once()
-        assert "Error sending member invite email" in mock_logger.exception.call_args[0][0]
-
+    @patch('ecclesia.apps.users.tasks.member_invite.TokenService')
+    @patch('ecclesia.apps.users.tasks.member_invite.EmailService')
     @patch('ecclesia.apps.users.tasks.member_invite.logger')
-    def test_send_member_invite_email_logs_url(self, mock_logger):
+    def test_send_member_invite_email_logs_url(self, mock_logger, mock_email_service, mock_token_service):
         """Testa que a URL de verificação é logada corretamente."""
-        # MOCKAR O TOKEN GENERATOR E UID ANTES DE CHAMAR A FUNÇÃO
-        with patch('ecclesia.apps.users.tasks.member_invite.default_token_generator') as mock_gen:
-            mock_gen.make_token.return_value = "test-token"
-            with patch('ecclesia.apps.users.tasks.member_invite.urlsafe_base64_encode') as mock_uid:
-                mock_uid.return_value = "dGVzdC11aWQ="
-                with patch('ecclesia.apps.users.tasks.member_invite.render_to_string') as mock_render:
-                    mock_render.return_value = "<html>content</html>"
-                    with patch('ecclesia.apps.users.tasks.member_invite.EmailMultiAlternatives') as mock_email:
-                        mock_email_instance = MagicMock()
-                        mock_email.return_value = mock_email_instance
+        # Configurar mocks
+        mock_token_service.generate_verification_data.return_value = ("dGVzdC11aWQ=", "test-token")
+        mock_token_service.build_verification_url.return_value = (
+            f"{settings.BACKEND_URL}/api/users/verify-email/dGVzdC11aWQ=/test-token"
+        )
 
-                        send_member_invite_email(self.member_user.id, self.temp_password, self.church_id)
+        send_member_invite_email(self.member_user.id, self.temp_password, self.church_id)
 
-                        expected_url = f"{settings.BACKEND_URL}/api/users/verify-email/dGVzdC11aWQ=/test-token"
-                        mock_logger.info.assert_any_call("Member invite URL generated: %s", expected_url)
+        # Verificar se a URL foi logada
+        mock_logger.info.assert_any_call(
+            "Member invite URL generated: %s",
+            mock_token_service.build_verification_url.return_value
+        )
