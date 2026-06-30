@@ -6,8 +6,6 @@
 
 
 import pytest
-from datetime import date, timedelta
-from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from  ecclesia.apps.users.tests.models.conftest import  build_user_data

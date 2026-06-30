@@ -6,12 +6,8 @@ import logging
 import uuid
 
 from celery import shared_task
-
+from ecclesia.apps.users.utils.email_service import EmailService
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
-
 from ecclesia.apps.community.selectors.church_in_church_selector import (
     get_church_affiliation_request_by_id,
 )
@@ -60,20 +56,12 @@ def send_affiliation_online_invite(self, church_affiliation_id: uuid.UUID) -> No
             "invitation_url": invitation_url,
         }
 
-        html_content = render_to_string("community/emails/affiliation_online_invite.html", context,)
-
-        text_content = strip_tags(html_content)
-
-        email = EmailMultiAlternatives(
+        EmailService.send_html_email(
             subject="Solicitação de Afiliação",
-            body=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[affiliation.to_church.user.email,],
+            to_email=affiliation.to_church.user.email,
+            template_name="community/emails/affiliation_online_invite.html",
+            context=context,
         )
-
-        email.attach_alternative(html_content, "text/html",)
-
-        email.send(fail_silently=False)
 
         logger.info("Affiliation invite email sent. ""request_id=%s from=%s to=%s", affiliation.id,
             affiliation.from_church.id, affiliation.invited_church_full_name,)
