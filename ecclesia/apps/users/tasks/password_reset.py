@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-
+from ecclesia.apps.users.models.user import User
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +18,7 @@ def send_password_reset_email(self, user_id: str, uid: str, token: str) -> None:
     - e-mail HTML + fallback texto
     """
     try:
-        from ecclesia.apps.users.models.user import User
+        
 
         user = User.objects.get(pk=user_id)
         reset_url = f"{settings.FRONTEND_URL}/redefinir-senha/{uid}/{token}"

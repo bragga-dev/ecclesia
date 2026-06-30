@@ -8,7 +8,11 @@ from django.utils.html import strip_tags
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-
+from ecclesia.apps.users.models.user import User
+from ecclesia.apps.users.models.church import Church
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +23,7 @@ def send_member_invite_email(self, user_id: str, temp_password: str, church_id: 
     Envia e-mail de boas-vindas ao membro cadastrado pela Igreja.
     Inclui senha temporária e link de verificação de e-mail.
     """
-    try:
-        from ecclesia.apps.users.models.user import User
-        from ecclesia.apps.users.models.church import Church
-        from django.contrib.auth.tokens import default_token_generator
-        from django.utils.encoding import force_bytes
-        from django.utils.http import urlsafe_base64_encode
+    try:     
 
         user = User.objects.get(pk=user_id)
         church = Church.objects.get(id=church_id)
