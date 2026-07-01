@@ -1,6 +1,4 @@
-# Re-exporta todos os símbolos públicos para manter compatibilidade retroativa.
-# Código que fazia `from ecclesia.apps.users.models import User` continua funcionando.
-
+# Re-exporta todos os símbolos públicos para manter compatibilidade retroativa
 from .constants import ROLE_ADMIN, ROLE_MEMBER, ROLE_CHURCH
 from ecclesia.apps.users.models.user_manage import UserManager
 from .user import User, user_photo_path, DEFAULT_USER_PHOTO
@@ -8,6 +6,9 @@ from .base_address import BaseAddress
 from .member import Member, MemberAddress
 from .church import Church, ChurchAddress, church_banner_path, DEFAULT_CHURCH_BANNER
 from .audit_user_model import AuditLog
+from ecclesia.apps.users.models.system_permission import SystemPermission  
+from ecclesia.apps.users.models.member_church_permission import MemberChurchPermission  
+from ecclesia.apps.community.models.member_church_model import MemberChurch  
 
 __all__ = [
     # Constantes
@@ -31,4 +32,9 @@ __all__ = [
     "ChurchAddress",
     "church_banner_path",
     "DEFAULT_CHURCH_BANNER",
+    # MemberChurch
+    "MemberChurch",  
+    # Permissions )
+    "SystemPermission",
+    "MemberChurchPermission",  
 ]
