@@ -19,7 +19,7 @@ from ecclesia.apps.users.selectors.church_selector import (
     get_unverified_churches,
     get_churches_by_type,
     get_churches_by_parent,
-    get_headquarters,
+    get_parish,
     get_churches_excluding_id,
     get_churches_ordered_by_name,
     get_church_with_user,
@@ -52,7 +52,7 @@ class BaseChurchSelectorTest(TestCase):
             user=cls.user,
             cnpj="16.196.634/0001-00",
             full_name="Igreja Central",
-            church_type=Church.ChurchType.HEADQUARTERS,
+            church_type=Church.ChurchType.PARISH,
             is_verified=True,
         )
 
@@ -210,9 +210,9 @@ class TestChurchSelectors(BaseChurchSelectorTest):
         self.assertEqual(result.count(), 1)
         self.assertEqual(result.first().id, self.other_church.id)
 
-    def test_get_churches_by_type_headquarters(self):
+    def test_get_churches_by_type_parish(self):
         """Deve retornar igrejas por tipo (sede)."""
-        result = get_churches_by_type(Church.ChurchType.HEADQUARTERS)
+        result = get_churches_by_type(Church.ChurchType.PARISH)
         self.assertEqual(result.count(), 1)
         self.assertEqual(result.first().id, self.church.id)
 
@@ -233,9 +233,9 @@ class TestChurchSelectors(BaseChurchSelectorTest):
         self.assertEqual(result.count(), 1)
         self.assertEqual(result.first().id, self.other_church.id)
 
-    def test_get_headquarters(self):
+    def test_get_parish(self):
         """Deve retornar apenas sedes/matrizes."""
-        result = get_headquarters()
+        result = get_parish()
         self.assertEqual(result.count(), 1)
         self.assertEqual(result.first().id, self.church.id)
 
