@@ -5,7 +5,7 @@ from functools import wraps
 from typing import Union, List, Optional
 from ninja.security import HttpBearer
 
-from .system_permissions import (
+from ecclesia.apps.users.permissions.checker_permissions import (
     MemberChurchPermissionChecker,
     MemberChurchAllPermissionsChecker
 )

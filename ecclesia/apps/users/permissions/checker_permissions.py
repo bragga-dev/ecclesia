@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from ecclesia.apps.community.models.member_church_model import MemberChurch
 from ecclesia.apps.users.models.member_church_permission import MemberChurchPermission
-from ecclesia.apps.users.models.system_permission import SystemPermission
+
 
 
 class MemberChurchPermissionChecker:
