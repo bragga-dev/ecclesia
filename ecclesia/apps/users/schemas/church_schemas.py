@@ -16,7 +16,7 @@ _cnpj = CNPJ()
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
 class ChurchTypeEnum(str, Enum):
-    HEADQUARTERS = "headquarters"
+    PARISH = "parish"
     COMMUNITY = "community"
     INDEPENDENT = "independent"
 

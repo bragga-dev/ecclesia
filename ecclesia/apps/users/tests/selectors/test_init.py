@@ -83,7 +83,7 @@ class TestSelectorsInit(TestCase):
             "get_unverified_churches",
             "get_churches_by_type",
             "get_churches_by_parent",
-            "get_headquarters",
+            "get_parish",
             "get_churches_excluding_id",
             "get_churches_ordered_by_name",
             "get_church_with_user",

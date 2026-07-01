@@ -70,19 +70,19 @@ def get_unverified_churches() -> QuerySet[Church]:
 def get_churches_by_type(church_type: str) -> QuerySet[Church]:
     """
     Retorna igrejas por tipo.
-    Use as constantes: Church.ChurchType.HEADQUARTERS/COMMUNITY/INDEPENDENT
+    Use as constantes: Church.ChurchType.PARISH/COMMUNITY/INDEPENDENT
     """
     return Church.objects.filter(church_type=church_type)
 
 
 def get_churches_by_parent(parent_id: uuid.UUID) -> QuerySet[Church]:
-    """Retorna igrejas filhas de uma sede/matriz."""
+    """Retorna igrejas filhas de uma paróquia."""
     return Church.objects.filter(parent_church_id=parent_id)
 
 
-def get_headquarters() -> QuerySet[Church]:
+def get_parish() -> QuerySet[Church]:
     """Retorna apenas sedes/matrizes."""
-    return Church.objects.filter(church_type=Church.ChurchType.HEADQUARTERS)
+    return Church.objects.filter(church_type=Church.ChurchType.PARISH)
 
 
 def get_churches_excluding_id(church_id: uuid.UUID) -> QuerySet[Church]:
@@ -161,7 +161,7 @@ def get_church_with_addresses(church_id: uuid.UUID) -> Optional[Church]:
 
 def get_church_with_children(church_id: uuid.UUID) -> Optional[Church]:
     """
-    Busca sede/matriz com prefetch das igrejas filhas.
+    Busca paróquia com prefetch das igrejas filhas.
     Útil para exibir a hierarquia de uma matriz.
     """
     return (

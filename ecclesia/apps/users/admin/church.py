@@ -119,7 +119,7 @@ class ChurchAdmin(admin.ModelAdmin):
     @admin.display(description="Tipo")
     def church_type_badge(self, obj):
         colors = {
-            Church.ChurchType.HEADQUARTERS: ("#1e40af", "#dbeafe"),
+            Church.ChurchType.PARISH: ("#1e40af", "#dbeafe"),
             Church.ChurchType.COMMUNITY: ("#15803d", "#dcfce7"),
             Church.ChurchType.INDEPENDENT: ("#6b7280", "#f3f4f6"),
         }
