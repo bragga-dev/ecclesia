@@ -57,17 +57,14 @@ class ChurchAffiliationRequest(models.Model):
             return f"{self.get_request_type_display()} de {self.from_church} para {self.invited_church_full_name} ({self.get_status_display()})"
         return f"{self.get_request_type_display()} de {self.from_church} para {self.to_church} ({self.get_status_display()})"
 
-    
     def accept(self):
         """Aceita a solicitação de afiliação."""
         if self.status != self.Status.PENDING:
             raise ValidationError("Só é possível aceitar solicitações pendentes.")
         if self.expires_at and timezone.now() > self.expires_at:
             raise ValidationError("Esta solicitação já expirou.")
-        
         self.status = self.Status.ACCEPTED
         self.save()
-        # TODO: Criar a relação de afiliação entre as igrejas
 
     def reject(self):
         """Rejeita a solicitação de afiliação."""
@@ -87,32 +84,33 @@ class ChurchAffiliationRequest(models.Model):
         """Verifica se a solicitação está expirada."""
         if not self.expires_at:
             return False
-        from django.utils import timezone
         return timezone.now() > self.expires_at
-    
-    def save(self, *args, **kwargs):    
-        if self.mode == self.Mode.OFFLINE:        
+
+    def save(self, *args, **kwargs):
+        if self.mode == self.Mode.OFFLINE:
             if self.expires_at is None:
                 self.expires_at = _default_expiration()
-            
             if not self.code:
                 self.code = _generate_code()
-        
+
         elif self.mode == self.Mode.AUTHENTICATED:
             self.expires_at = None
             self.code = None
-        
+
         if self.mode == self.Mode.OFFLINE:
             if not self.invited_email:
                 raise ValidationError("Offline invites require invited_email")
             if not self.invited_church_full_name:
                 raise ValidationError("Offline invites require invited_church_full_name")
-            if self.to_church:
-                raise ValidationError("Offline invites cannot have to_church")
-        
+            # to_church só é permitido quando o convite foi aceito
+            # (a church é criada no momento do aceite e vinculada aqui)
+            if self.to_church and self.status == self.Status.PENDING:
+                raise ValidationError("Offline invites cannot have to_church while pending")
+
         elif self.mode == self.Mode.AUTHENTICATED:
             if not self.to_church:
                 raise ValidationError("Authenticated requests require to_church")
             if self.invited_email or self.invited_church_full_name:
                 raise ValidationError("Authenticated requests cannot have offline fields")
+
         super().save(*args, **kwargs)

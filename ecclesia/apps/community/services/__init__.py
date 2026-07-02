@@ -14,6 +14,7 @@ from ecclesia.apps.community.services.church_in_church_service import (
     create_authenticated_invite,
     create_affiliation_request,
     create_offline_invite,
+    get_pending_offline_invites,
 
 )
 
@@ -33,4 +34,5 @@ __all__ = [
     "create_authenticated_invite",
     "create_affiliation_request",
     "create_offline_invite",
+    "get_pending_offline_invites",
 ]

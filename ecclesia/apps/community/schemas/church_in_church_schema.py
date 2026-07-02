@@ -69,7 +69,7 @@ class ChurchAffiliationOfflineInviteIn(Schema):
 
 
 # ============================================================
-# COMUNIDADE → SEDE (OLINE)
+# COMUNIDADE → SEDE (ONLINE)
 # ============================================================
 class ChurchAffiliationRequestIn(Schema):
     message: Optional[str] = Field(None, max_length=500)
@@ -109,7 +109,11 @@ class ChurchAffiliationRequestListOut(Schema):
         return cls(
             id=church_affiliation_request.id,
             from_church=church_affiliation_request.from_church.full_name or str(church_affiliation_request.from_church.id),
-            to_church=church_affiliation_request.to_church.full_name or str(church_affiliation_request.to_church.id),
+            to_church=(
+                church_affiliation_request.to_church.full_name
+                if church_affiliation_request.to_church
+                else church_affiliation_request.invited_church_full_name
+            ),
             request_type=church_affiliation_request.request_type,
             request_type_label=church_affiliation_request.get_request_type_display(),
             mode=church_affiliation_request.mode,
@@ -145,7 +149,6 @@ class ChurchAffiliationRequestAction(Schema):
     message: Optional[str] = None
 
 
-
 # ============================================================
 # CONSULTA POR CÓDIGO
 # ============================================================
@@ -168,25 +171,84 @@ class ChurchAffiliationOfflineInviteOut(Schema):
 
 
 # ============================================================
-# ACEITAR CONVITE OFFLINE
+# ACEITAR CONVITE OFFLINE — INPUT
 # ============================================================
 
 class ChurchAffiliationOfflineAcceptIn(Schema):
-
     code: str
 
 
+# ============================================================
+# ACEITAR CONVITE OFFLINE — OUTPUT (EXISTENTE, mantido)
+# ============================================================
+
 class ChurchAffiliationOfflineAcceptOut(Schema):
-
     success: bool
-
     church_name: str
-
     email: str
-
     message: str
-
     affiliation_id: uuid.UUID
+
+
+# ============================================================
+# LOOKUP DO CONVITE OFFLINE — dados da tela pública  ← NOVO
+# ============================================================
+
+class ChurchAffiliationOfflineLookupOut(Schema):
+    """
+    Exibido na tela pública quando a igreja anônima acessa o link do e-mail.
+    Mostra os dados da sede para que a igreja decida se aceita ou não.
+    """
+    id: uuid.UUID
+    from_church_name: str
+    from_church_type: str
+    from_church_email: Optional[str]
+    from_church_phone: Optional[str]
+    from_church_website: Optional[str]
+    from_church_instagram: Optional[str]
+    from_church_about: Optional[str]
+    from_church_banner: Optional[str]
+    invited_church_full_name: str
+    invited_email: str
+    message: Optional[str]
+    expires_at: Optional[datetime]
+    is_expired: bool
+
+    @classmethod
+    def from_orm(cls, obj: ChurchAffiliationRequest) -> "ChurchAffiliationOfflineLookupOut":
+        return cls(
+            id=obj.id,
+            from_church_name=obj.from_church.full_name or "",
+            from_church_type=obj.from_church.get_church_type_display(),
+            from_church_email=obj.from_church.user.email,
+            from_church_phone=str(obj.from_church.phone) if obj.from_church.phone else None,
+            from_church_website=obj.from_church.website,
+            from_church_instagram=obj.from_church.instagram,
+            from_church_about=obj.from_church.about,
+            from_church_banner=obj.from_church.banner_url,
+            invited_church_full_name=obj.invited_church_full_name or "",
+            invited_email=obj.invited_email or "",
+            message=obj.message,
+            expires_at=obj.expires_at,
+            is_expired=obj.is_expired(),
+        )
+
+
+# ============================================================
+# ACEITE COM JWT — retorno após criação da conta  ← NOVO
+# ============================================================
+
+class ChurchAffiliationOfflineAcceptWithTokensOut(Schema):
+    """
+    Retornado após a nova igreja aceitar o convite e ter a conta criada.
+    Contém tokens JWT para login automático + dados da afiliação.
+    """
+    access: str
+    refresh: str
+    affiliation_id: uuid.UUID
+    church_full_name: Optional[str] = None
+    from_church_name: Optional[str] = None
+    is_new: bool = True
 
 
 # ============================================================
@@ -194,7 +256,6 @@ class ChurchAffiliationOfflineAcceptOut(Schema):
 # ============================================================
 
 __all__ = [
-
     "ChurchAffiliationRequestOut",
     "ChurchAffiliationInviteIn",
     "ChurchAffiliationOfflineInviteIn",
@@ -207,4 +268,6 @@ __all__ = [
     "ChurchAffiliationOfflineInviteOut",
     "ChurchAffiliationOfflineAcceptIn",
     "ChurchAffiliationOfflineAcceptOut",
+    "ChurchAffiliationOfflineLookupOut",
+    "ChurchAffiliationOfflineAcceptWithTokensOut",
 ]

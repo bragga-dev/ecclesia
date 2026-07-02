@@ -7,6 +7,8 @@ from typing import Optional
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from ecclesia.apps.users.models.church import Church
+from django.db.models import Count, Q
+from django.utils import timezone
 
 # ── Busca individual ────────────────────────────────────────────────────────────────────
 
@@ -245,8 +247,6 @@ def get_affiliations_between_churches(church1_id: uuid.UUID, church2_id: uuid.UU
 
 # ── Queries Estatísticas ────────────────────────────────────────────────────
 
-from django.db.models import Count, Q
-from django.utils import timezone
 
 def get_affiliation_stats(
     church_id: uuid.UUID
@@ -573,3 +573,4 @@ def get_church_affiliation_request_by_id(affiliation_id: uuid.UUID) -> ChurchAff
         .filter(id=affiliation_id)
         .first()
     )
+

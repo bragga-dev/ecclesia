@@ -15,6 +15,7 @@ def create_church_profile(
     instagram: Optional[str] = None,
     website: Optional[str] = None,
     about: Optional[str] = None,
+    church_type: Optional[Church.ChurchType] = Church.ChurchType.INDEPENDENT,
     
 ) -> Church:
     return Church.objects.create(
@@ -24,6 +25,7 @@ def create_church_profile(
         instagram=instagram,
         website=website,
         about=about,
+        church_type=church_type,
     )
 
 def update_church_profile(church: Church, **fields) -> Church:
