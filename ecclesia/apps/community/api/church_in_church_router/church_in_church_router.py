@@ -118,42 +118,6 @@ def lookup_offline_invite_endpoint(request, code: str):
     return 200, out
 
 # ============================================================
-# DETALHE DE UM CONVITE/SOLICITAÇÃO
-# ============================================================
-@router.get(
-    "/church/affiliation/{affiliation_id}",
-    auth=ChurchOnlyAuth(),
-    response={200: ChurchAffiliationRequestOut, 403: MessageOut, 404: MessageOut},
-    summary="Detalhe de um convite ou solicitação",
-)
-@ratelimit(key="user", rate="60/m", block=True)
-def get_church_affiliation_endpoint(
-    request,
-    affiliation_id: uuid.UUID,
-):
-    from ecclesia.apps.community.services.church_in_church_service import (
-        handle_affiliation_action,
-    )
-    from ecclesia.apps.community.selectors.church_in_church_selector import (
-        get_church_affiliation_request_by_id,
-    )
-    church = request.auth.church
-    affiliation = get_church_affiliation_request_by_id(affiliation_id)
-
-    if not affiliation:
-        return 404, {"detail": "Solicitação não encontrada."}
-
-    is_from = affiliation.from_church_id == church.id
-    is_to = affiliation.to_church_id == church.id if affiliation.to_church else False
-
-    if not is_from and not is_to:
-        return 403, {"detail": "Você não tem acesso a esta solicitação."}
-
-    return 200, ChurchAffiliationRequestOut.from_orm(affiliation)
-
-
-
-# ============================================================
 # SEDE → IGREJA NÃO CADASTRADA (OFFLINE) - ENVIAR CONVITE
 # ============================================================
 @router.post(
@@ -244,6 +208,41 @@ def accept_offline_invite_endpoint(request, code: str):
 
 
 # ============================================================
+# DETALHE DE UM CONVITE/SOLICITAÇÃO
+# ============================================================
+@router.get(
+    "/church/affiliation/{affiliation_id}",
+    auth=ChurchOnlyAuth(),
+    response={200: ChurchAffiliationRequestOut, 403: MessageOut, 404: MessageOut},
+    summary="Detalhe de um convite ou solicitação",
+)
+@ratelimit(key="user", rate="60/m", block=True)
+def get_church_affiliation_endpoint(
+    request,
+    affiliation_id: uuid.UUID,
+):
+    from ecclesia.apps.community.services.church_in_church_service import (
+        handle_affiliation_action,
+    )
+    from ecclesia.apps.community.selectors.church_in_church_selector import (
+        get_church_affiliation_request_by_id,
+    )
+    church = request.auth.church
+    affiliation = get_church_affiliation_request_by_id(affiliation_id)
+
+    if not affiliation:
+        return 404, {"detail": "Solicitação não encontrada."}
+
+    is_from = affiliation.from_church_id == church.id
+    is_to = affiliation.to_church_id == church.id if affiliation.to_church else False
+
+    if not is_from and not is_to:
+        return 403, {"detail": "Você não tem acesso a esta solicitação."}
+
+    return 200, ChurchAffiliationRequestOut.from_orm(affiliation)
+
+
+# ============================================================
 # AÇÃO EM CONVITE/SOLICITAÇÃO (autenticado — Igreja)
 # ============================================================
 @router.patch(
@@ -308,4 +307,3 @@ def create_church_affiliation_request(request,  payload: ChurchAffiliationReques
         return 409, {"detail": str(e)}
 
     return 201, ChurchAffiliationRequestOut.from_orm(church_affiliation)
-
