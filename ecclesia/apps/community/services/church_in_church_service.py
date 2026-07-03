@@ -1,16 +1,15 @@
 """
 Church In Church Service — lógica de negócio de afiliações.
 """
-# Biblioteca padrão
+
 import uuid
 
-# Django core
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
-# Apps - usuários (models, repositories, services, selectors)
+
 from ecclesia.apps.users.models.church import Church
 from ecclesia.apps.users.models.user import User
 from ecclesia.apps.users.repositories.church import create_church_profile
@@ -18,7 +17,7 @@ from ecclesia.apps.users.repositories.user import create_user, activate_user
 from ecclesia.apps.users.selectors.church_selector import get_church_by_id
 from ecclesia.apps.users.services.auth import _make_tokens
 
-# Apps - comunidade (models, repositories, selectors)
+
 from ecclesia.apps.community.models.church_in_church_model import ChurchAffiliationRequest
 from ecclesia.apps.community.repositories.church_in_church_repository import (
     create_affiliation_between_church,
@@ -32,25 +31,26 @@ from ecclesia.apps.community.selectors.church_in_church_selector import (
     validate_church_can_affiliation_request,
     validate_church_can_authenticated_invite,
     validate_church_can_be_offline_invited,
+    get_affiliation_requests_with_prefetch,
+    get_affiliation_requests_with_prefetch,
+    get_affiliation_stats,
+    amply_church_in_church_filters,
+    search_church_in_church_selector,
+
 )
 
-# Apps - comunidade (tasks)
-from ecclesia.apps.community.tasks.send_affiliation_offline_accepted import (
-    send_affiliation_offline_accepted,
-)
-from ecclesia.apps.community.tasks.send_affiliation_offline_invite import (
-    send_affiliation_offline_invite,
-)
-from ecclesia.apps.community.tasks.send_affiliation_online_invite import (
-    send_affiliation_online_invite,
-)
-from ecclesia.apps.community.tasks.send_affiliation_request import (
-    send_affiliation_request,
-)
-from ecclesia.apps.community.tasks.send_confirme_affiliation_online_invite import (
-    send_confirme_affiliation_online_invite,
-)
+
+from ecclesia.apps.community.tasks.send_affiliation_offline_accepted import send_affiliation_offline_accepted
+from ecclesia.apps.community.tasks.send_affiliation_offline_invite import send_affiliation_offline_invite
+from ecclesia.apps.community.tasks.send_affiliation_online_invite import send_affiliation_online_invite
+from ecclesia.apps.community.tasks.send_affiliation_request import send_affiliation_request
+from ecclesia.apps.community.tasks.send_confirme_affiliation_online_invite import send_confirme_affiliation_online_invite
+from ecclesia.apps.community.tasks.send_affiliation_accepted_to_parish import send_affiliation_accepted_to_parish
+
 from ecclesia.apps.community.utils.generate_temp_password import _generate_temp_password
+
+
+
 # =========================================================================
 # PARÓQUIA -> COMUNIDADE ONLINE
 # =========================================================================
@@ -193,6 +193,7 @@ def accept_offline_invite(*, code: str) -> dict:
     # ── 6. Dispara e-mail de confirmação com credenciais ─────────────────
     # Passa temp_password como argumento — não persiste no banco por segurança
     send_affiliation_offline_accepted.delay(invite.id, temp_password)
+    send_affiliation_accepted_to_parish.delay(invite.id)
 
     # ── 7. Retorna tokens para login automático ───────────────────────────
     tokens = _make_tokens(user)
@@ -229,6 +230,7 @@ def handle_affiliation_action(
 
     if action == "accept":
         affiliation.accept()
+        send_affiliation_accepted_to_parish.delay(affiliation.id)
     elif action == "reject":
         affiliation.reject()
     elif action == "cancel":
@@ -267,3 +269,25 @@ def create_affiliation_request(
     )
     send_affiliation_request.delay(invite.id)
     return invite
+
+
+
+def list_church_affiliations(
+    *,
+    church_id: uuid.UUID,
+    filters=None,
+    search: str | None = None,
+):
+    queryset = get_affiliation_requests_with_prefetch(church_id=church_id)
+
+    if filters:
+        queryset = amply_church_in_church_filters(queryset, filters)
+
+    if search:
+        queryset = search_church_in_church_selector(queryset, search)
+
+    return queryset
+
+
+def get_church_affiliation_stats_service(*, church_id: uuid.UUID) -> dict:
+    return get_affiliation_stats(church_id=church_id)

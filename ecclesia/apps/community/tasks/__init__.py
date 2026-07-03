@@ -4,6 +4,7 @@ from ecclesia.apps.community.tasks.send_affiliation_online_invite import send_af
 from ecclesia.apps.community.tasks.send_affiliation_request import send_affiliation_request
 from ecclesia.apps.community.tasks.send_confirme_affiliation_online_invite import send_confirme_affiliation_online_invite
 from ecclesia.apps.community.tasks.send_affiliation_offline_accepted import send_affiliation_offline_accepted
+from ecclesia.apps.community.tasks.send_affiliation_accepted_to_parish import send_affiliation_accepted_to_parish
 
 __all__ = [
     "send_affiliation_offline_invite",
@@ -11,4 +12,5 @@ __all__ = [
     "send_affiliation_request",
     "send_confirme_affiliation_online_invite",
     "send_affiliation_offline_accepted",
+    "send_affiliation_accepted_to_parish",
 ]

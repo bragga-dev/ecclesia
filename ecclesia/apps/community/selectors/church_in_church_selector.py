@@ -403,22 +403,26 @@ def get_affiliation_requests_with_prefetch(
             "to_church__addresses"
         )
         .only(
-            "id",
-            "request_type",
-            "status",
-            "mode",
-            "code",
-            "message",
-            "created_at",
-            "accepted_at",
-            "expires_at",
-            "from_church__full_name",
-            "from_church__slug",
-            "to_church__full_name",
-            "to_church__slug",
-            "invited_email",
-            "invited_church_full_name"
-        )
+        "id",
+        "request_type",
+        "status",
+        "mode",
+        "code",
+        "message",
+        "created_at",
+        "accepted_at",
+        "expires_at",
+        "invited_email",
+        "invited_church_full_name",
+        "from_church__full_name",
+        "from_church__slug",
+        "from_church__user",          # ← adicionar
+        "from_church__user__email",   # ← adicionar
+        "to_church__full_name",
+        "to_church__slug",
+        "to_church__user",            # ← adicionar
+        "to_church__user__email",     # ← adicionar
+    )
         .order_by("-created_at")
     )
 

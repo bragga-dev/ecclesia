@@ -3,6 +3,7 @@ Church Members router — Igreja cadastra e lista seus membros.
 Pertence ao app community.
 """
 import uuid
+from typing import Optional
 from ecclesia.apps.community.selectors.church_in_church_selector import get_offline_invites_by_code
 from django.conf import settings
 from ninja import Router, Query
@@ -24,6 +25,7 @@ from ecclesia.apps.community.schemas.church_in_church_schema import (
     ChurchAffiliationOfflineAcceptIn,
     ChurchAffiliationOfflineAcceptOut,
     ChurchAffiliationOfflineAcceptWithTokensOut,
+    ChurchAffiliationRequestFilter,
 
 )
 from ecclesia.apps.community.services.church_in_church_service import (
@@ -40,31 +42,115 @@ from ecclesia.apps.community.services.church_in_church_service import (
 
 router = Router(tags=["Churches"])
 
-
-
-
 # ============================================================
-# SEDE → IGREJA CADASTRADA (ONLINE) - ENVIAR CONVITE
+# LISTAR CONVITES/SOLICITAÇÕES DA IGREJA
 # ============================================================
-@router.post("/church/affiliation/invite/{to_church_id}",
+@router.get(
+    "/church/affiliations",
     auth=ChurchOnlyAuth(),
-    response={201: ChurchAffiliationRequestOut, 409: MessageOut},
-    summary="Igreja Paróquia envia convite de afiliação",
-    description=(
-        "Uma igreja do tipo Paróquia pode enviar um convite de afiliação "
-        "para uma igreja do tipo Comunidade. O convite fica pendente até que "
-        "a igreja convidada o aceite ou rejeite."
-    ),
+    response={200: list[ChurchAffiliationRequestListOut]},
+    summary="Listar convites e solicitações de afiliação",
+)
+@ratelimit(key="user", rate="60/m", block=True)
+def list_church_affiliations_endpoint(
+    request,
+    filters: ChurchAffiliationRequestFilter = Query(...),
+    search: Optional[str] = None,
+):
+    from ecclesia.apps.community.services.church_in_church_service import (
+        list_church_affiliations,
+    )
+    church = request.auth.church
+    queryset = list_church_affiliations(
+        church_id=church.id,
+        filters=filters,
+        search=search,
+    )
+    return 200, [ChurchAffiliationRequestListOut.from_orm(a) for a in queryset]
+
+
+
+# ============================================================
+# ESTATÍSTICAS DE AFILIAÇÃO DA IGREJA
+# ============================================================
+@router.get(
+    "/church/affiliations/stats",
+    auth=ChurchOnlyAuth(),
+    response={200: dict},
+    summary="Estatísticas de afiliações da igreja",
 )
 @ratelimit(key="user", rate="30/m", block=True)
-def create_church_affiliation_invite(request, payload: ChurchAffiliationInviteIn, to_church_id: uuid.UUID):
-    from_church_id = request.auth.church.id    
-    try:
-        church_affiliation = create_authenticated_invite(from_church_id=from_church_id, to_church_id=to_church_id, message=payload.message)
-    except ValidationError as e:
-        return 409, {"detail": str(e)}
+def get_church_affiliation_stats_endpoint(request):
+    from ecclesia.apps.community.services.church_in_church_service import (
+        get_church_affiliation_stats_service,
+    )
+    church = request.auth.church
+    return 200, get_church_affiliation_stats_service(church_id=church.id)
 
-    return 201, ChurchAffiliationRequestOut.from_orm(church_affiliation)
+
+# ============================================================
+# CONSULTA DO CONVITE OFFLINE (público — sem auth)
+# ============================================================
+@router.get(
+    "/church/affiliation/offline/lookup",
+    auth=None,
+    response={200: ChurchAffiliationOfflineLookupOut, 404: MessageOut, 410: MessageOut},
+    summary="Consulta convite offline por código",
+    description=(
+        "Rota pública. Recebe o code da URL do e-mail e retorna os dados "
+        "do convite para exibição na tela de boas-vindas."
+    ),
+)
+def lookup_offline_invite_endpoint(request, code: str):
+    try:
+        invite = get_pending_offline_invites(code=code)
+    except ValidationError as e:
+        return 404, {"detail": str(e)}
+
+    if invite is None:
+        return 404, {"detail": "Convite não encontrado"}
+
+    out = ChurchAffiliationOfflineLookupOut.from_orm(invite)
+
+    if out.is_expired:
+        return 410, {"detail": "Este convite expirou. Solicite um novo à igreja remetente."}
+
+    return 200, out
+
+# ============================================================
+# DETALHE DE UM CONVITE/SOLICITAÇÃO
+# ============================================================
+@router.get(
+    "/church/affiliation/{affiliation_id}",
+    auth=ChurchOnlyAuth(),
+    response={200: ChurchAffiliationRequestOut, 403: MessageOut, 404: MessageOut},
+    summary="Detalhe de um convite ou solicitação",
+)
+@ratelimit(key="user", rate="60/m", block=True)
+def get_church_affiliation_endpoint(
+    request,
+    affiliation_id: uuid.UUID,
+):
+    from ecclesia.apps.community.services.church_in_church_service import (
+        handle_affiliation_action,
+    )
+    from ecclesia.apps.community.selectors.church_in_church_selector import (
+        get_church_affiliation_request_by_id,
+    )
+    church = request.auth.church
+    affiliation = get_church_affiliation_request_by_id(affiliation_id)
+
+    if not affiliation:
+        return 404, {"detail": "Solicitação não encontrada."}
+
+    is_from = affiliation.from_church_id == church.id
+    is_to = affiliation.to_church_id == church.id if affiliation.to_church else False
+
+    if not is_from and not is_to:
+        return 403, {"detail": "Você não tem acesso a esta solicitação."}
+
+    return 200, ChurchAffiliationRequestOut.from_orm(affiliation)
+
 
 
 # ============================================================
@@ -109,33 +195,28 @@ def create_church_offline_invite(
     )
 
 # ============================================================
-# CONSULTA DO CONVITE OFFLINE (público — sem auth)
+# SEDE → IGREJA CADASTRADA (ONLINE) - ENVIAR CONVITE
 # ============================================================
-@router.get(
-    "/church/affiliation/offline/lookup",
-    auth=None,
-    response={200: ChurchAffiliationOfflineLookupOut, 404: MessageOut, 410: MessageOut},
-    summary="Consulta convite offline por código",
+@router.post("/church/affiliation/invite/{to_church_id}",
+    auth=ChurchOnlyAuth(),
+    response={201: ChurchAffiliationRequestOut, 409: MessageOut},
+    summary="Igreja Paróquia envia convite de afiliação",
     description=(
-        "Rota pública. Recebe o code da URL do e-mail e retorna os dados "
-        "do convite para exibição na tela de boas-vindas."
+        "Uma igreja do tipo Paróquia pode enviar um convite de afiliação "
+        "para uma igreja do tipo Comunidade. O convite fica pendente até que "
+        "a igreja convidada o aceite ou rejeite."
     ),
 )
-def lookup_offline_invite_endpoint(request, code: str):
+@ratelimit(key="user", rate="30/m", block=True)
+def create_church_affiliation_invite(request, payload: ChurchAffiliationInviteIn, to_church_id: uuid.UUID):
+    from_church_id = request.auth.church.id    
     try:
-        invite = get_pending_offline_invites(code=code)
+        church_affiliation = create_authenticated_invite(from_church_id=from_church_id, to_church_id=to_church_id, message=payload.message)
     except ValidationError as e:
-        return 404, {"detail": str(e)}
+        return 409, {"detail": str(e)}
 
-    if invite is None:
-        return 404, {"detail": "Convite não encontrado"}
+    return 201, ChurchAffiliationRequestOut.from_orm(church_affiliation)
 
-    out = ChurchAffiliationOfflineLookupOut.from_orm(invite)
-
-    if out.is_expired:
-        return 410, {"detail": "Este convite expirou. Solicite um novo à igreja remetente."}
-
-    return 200, out
 
 # ============================================================
 # ACEITE DO CONVITE OFFLINE (público — sem auth)

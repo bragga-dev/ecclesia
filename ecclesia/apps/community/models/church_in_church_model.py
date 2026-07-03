@@ -61,10 +61,11 @@ class ChurchAffiliationRequest(models.Model):
         """Aceita a solicitação de afiliação."""
         if self.status != self.Status.PENDING:
             raise ValidationError("Só é possível aceitar solicitações pendentes.")
-        if self.expires_at and timezone.now() > self.expires_at:
+        if self.is_expired():
             raise ValidationError("Esta solicitação já expirou.")
         self.status = self.Status.ACCEPTED
-        self.save()
+        self.accepted_at = timezone.now()
+        self.save(update_fields=["status", "accepted_at"])
 
     def reject(self):
         """Rejeita a solicitação de afiliação."""

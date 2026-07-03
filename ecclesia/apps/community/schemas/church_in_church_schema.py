@@ -90,7 +90,7 @@ class ChurchAffiliationRequestUpdate(Schema):
 
 class ChurchAffiliationRequestListOut(Schema):
     id: uuid.UUID
-    from_church: ChurchOut
+    from_church: str
     to_church: Optional[str]
     invited_email: Optional[str]
     invited_church_full_name: Optional[str]
@@ -102,7 +102,7 @@ class ChurchAffiliationRequestListOut(Schema):
     mode: ChurchAffiliationRequest.Mode
     created_at: datetime
     accepted_at: Optional[datetime]
-    expires_at: Optional[str]
+    expires_at: Optional[datetime]  # ← era str, deve ser datetime
 
     @classmethod
     def from_orm(cls, church_affiliation_request: ChurchAffiliationRequest) -> "ChurchAffiliationRequestListOut":
@@ -123,6 +123,8 @@ class ChurchAffiliationRequestListOut(Schema):
             created_at=church_affiliation_request.created_at,
             accepted_at=church_affiliation_request.accepted_at,
             expires_at=church_affiliation_request.expires_at,
+            invited_email=church_affiliation_request.invited_email,
+            invited_church_full_name=church_affiliation_request.invited_church_full_name,
         )
 
 
