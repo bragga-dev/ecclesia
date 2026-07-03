@@ -4,6 +4,7 @@ Pertence ao app community.
 """
 import uuid
 from typing import Optional
+from ecclesia.apps.users.utils.pagination import paginate_queryset, PageOut
 from ecclesia.apps.community.selectors.church_in_church_selector import get_offline_invites_by_code
 from django.conf import settings
 from ninja import Router, Query
@@ -36,7 +37,7 @@ from ecclesia.apps.community.services.church_in_church_service import (
     get_pending_offline_invites,
     handle_affiliation_action,
     get_pending_offline_invites,
-    
+    list_church_affiliations,
 
 )
 
@@ -48,7 +49,7 @@ router = Router(tags=["Churches"])
 @router.get(
     "/church/affiliations",
     auth=ChurchOnlyAuth(),
-    response={200: list[ChurchAffiliationRequestListOut]},
+    response={200: PageOut[ChurchAffiliationRequestListOut]},
     summary="Listar convites e solicitações de afiliação",
 )
 @ratelimit(key="user", rate="60/m", block=True)
@@ -56,19 +57,28 @@ def list_church_affiliations_endpoint(
     request,
     filters: ChurchAffiliationRequestFilter = Query(...),
     search: Optional[str] = None,
+     page: int = Query(
+        1,
+        ge=1,
+        description="Página atual",
+    ),
+
+    page_size: int = Query(
+        20,
+        ge=1,
+        le=100,
+        description="Itens por página",
+    ),
 ):
-    from ecclesia.apps.community.services.church_in_church_service import (
-        list_church_affiliations,
-    )
+ 
     church = request.auth.church
     queryset = list_church_affiliations(
         church_id=church.id,
         filters=filters,
         search=search,
     )
-    return 200, [ChurchAffiliationRequestListOut.from_orm(a) for a in queryset]
 
-
+    return 200, paginate_queryset(qs=queryset, page=page, page_size=page_size, serializer=(ChurchAffiliationRequestListOut.from_orm),)
 
 # ============================================================
 # ESTATÍSTICAS DE AFILIAÇÃO DA IGREJA

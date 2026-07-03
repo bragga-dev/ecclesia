@@ -102,7 +102,8 @@ class ChurchAffiliationRequestListOut(Schema):
     mode: ChurchAffiliationRequest.Mode
     created_at: datetime
     accepted_at: Optional[datetime]
-    expires_at: Optional[datetime]  # ← era str, deve ser datetime
+    expires_at: Optional[datetime]  
+    message: Optional[str] = None
 
     @classmethod
     def from_orm(cls, church_affiliation_request: ChurchAffiliationRequest) -> "ChurchAffiliationRequestListOut":
@@ -125,6 +126,7 @@ class ChurchAffiliationRequestListOut(Schema):
             expires_at=church_affiliation_request.expires_at,
             invited_email=church_affiliation_request.invited_email,
             invited_church_full_name=church_affiliation_request.invited_church_full_name,
+            message=church_affiliation_request.message[:20] if church_affiliation_request.message else None,
         )
 
 
