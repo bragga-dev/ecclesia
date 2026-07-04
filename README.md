@@ -271,15 +271,6 @@ apps/users/tests/
 | 🚀 **Pronto para produção** | Docker, Nginx, Gunicorn e Whitenoise configurados |
 | 🔒 **Segurança por design** | JWT, verificação de e-mail, rate limiting e boas práticas |
 
----
-
-## 🤝 Contribuição
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/amazing-feature`)
-3. Commit suas mudanças (`git commit -m 'Add some amazing feature'`)
-4. Push para a branch (`git push origin feature/amazing-feature`)
-5. Abra um Pull Request
 
 ---
 
@@ -288,11 +279,3 @@ apps/users/tests/
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
-
-## 📧 Contato
-
-- **Autor:** [Seu Nome]
-- **Email:** seu.email@exemplo.com
-- **Projeto:** [github.com/seu-usuario/ecclesia](https://github.com/seu-usuario/ecclesia)
-
-
