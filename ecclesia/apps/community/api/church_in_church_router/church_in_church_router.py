@@ -3,12 +3,14 @@ Church Members router — Igreja cadastra e lista seus membros.
 Pertence ao app community.
 """
 import uuid
+from typing import Optional
+from ecclesia.apps.users.utils.pagination import paginate_queryset, PageOut
+from ecclesia.apps.community.selectors.church_in_church_selector import get_offline_invites_by_code
+from django.conf import settings
 from ninja import Router, Query
 from django_ratelimit.decorators import ratelimit
 from django.core.exceptions import ValidationError
-from ecclesia.apps.users.models.church import Church
 from ecclesia.apps.users.permissions import ChurchOnlyAuth
-from ecclesia.apps.users.exceptions import UserAlreadyExists
 from ecclesia.apps.users.schemas.users_schemas import MessageOut
 from ecclesia.apps.users.utils.pagination import paginate_queryset, PageOut
 from ecclesia.apps.community.schemas.church_in_church_schema import (
@@ -20,42 +22,110 @@ from ecclesia.apps.community.schemas.church_in_church_schema import (
     ChurchAffiliationOfflineInviteIn,
     ChurchAffiliationRequestAction,
     ChurchAffiliationCodeLookupIn,
+    ChurchAffiliationOfflineLookupOut,
+    ChurchAffiliationOfflineAcceptIn,
+    ChurchAffiliationOfflineAcceptOut,
+    ChurchAffiliationOfflineAcceptWithTokensOut,
+    ChurchAffiliationRequestFilter,
 
 )
 from ecclesia.apps.community.services.church_in_church_service import (
     create_affiliation_request,
     create_offline_invite,
     create_authenticated_invite,
+    accept_offline_invite,
+    get_pending_offline_invites,
+    handle_affiliation_action,
+    get_pending_offline_invites,
+    list_church_affiliations,
+
 )
 
 router = Router(tags=["Churches"])
 
-
-
-
 # ============================================================
-# SEDE → IGREJA CADASTRADA (ONLINE) - ENVIAR CONVITE
+# LISTAR CONVITES/SOLICITAÇÕES DA IGREJA
 # ============================================================
-@router.post("/church/affiliation/invite/{to_church_id}",
+@router.get(
+    "/church/affiliations",
     auth=ChurchOnlyAuth(),
-    response={201: ChurchAffiliationRequestOut, 409: MessageOut},
-    summary="Igreja Paróquia envia convite de afiliação",
-    description=(
-        "Uma igreja do tipo Paróquia pode enviar um convite de afiliação "
-        "para uma igreja do tipo Comunidade. O convite fica pendente até que "
-        "a igreja convidada o aceite ou rejeite."
+    response={200: PageOut[ChurchAffiliationRequestListOut]},
+    summary="Listar convites e solicitações de afiliação",
+)
+@ratelimit(key="user", rate="60/m", block=True)
+def list_church_affiliations_endpoint(
+    request,
+    filters: ChurchAffiliationRequestFilter = Query(...),
+    search: Optional[str] = None,
+     page: int = Query(
+        1,
+        ge=1,
+        description="Página atual",
     ),
+
+    page_size: int = Query(
+        20,
+        ge=1,
+        le=100,
+        description="Itens por página",
+    ),
+):
+ 
+    church = request.auth.church
+    queryset = list_church_affiliations(
+        church_id=church.id,
+        filters=filters,
+        search=search,
+    )
+
+    return 200, paginate_queryset(qs=queryset, page=page, page_size=page_size, serializer=(ChurchAffiliationRequestListOut.from_orm),)
+
+# ============================================================
+# ESTATÍSTICAS DE AFILIAÇÃO DA IGREJA
+# ============================================================
+@router.get(
+    "/church/affiliations/stats",
+    auth=ChurchOnlyAuth(),
+    response={200: dict},
+    summary="Estatísticas de afiliações da igreja",
 )
 @ratelimit(key="user", rate="30/m", block=True)
-def create_church_affiliation_invite(request, payload: ChurchAffiliationInviteIn, to_church_id: uuid.UUID):
-    from_church_id = request.auth.church.id    
+def get_church_affiliation_stats_endpoint(request):
+    from ecclesia.apps.community.services.church_in_church_service import (
+        get_church_affiliation_stats_service,
+    )
+    church = request.auth.church
+    return 200, get_church_affiliation_stats_service(church_id=church.id)
+
+
+# ============================================================
+# CONSULTA DO CONVITE OFFLINE (público — sem auth)
+# ============================================================
+@router.get(
+    "/church/affiliation/offline/lookup",
+    auth=None,
+    response={200: ChurchAffiliationOfflineLookupOut, 404: MessageOut, 410: MessageOut},
+    summary="Consulta convite offline por código",
+    description=(
+        "Rota pública. Recebe o code da URL do e-mail e retorna os dados "
+        "do convite para exibição na tela de boas-vindas."
+    ),
+)
+def lookup_offline_invite_endpoint(request, code: str):
     try:
-        church_affiliation = create_authenticated_invite(from_church_id=from_church_id, to_church_id=to_church_id, message=payload.message)
+        invite = get_pending_offline_invites(code=code)
     except ValidationError as e:
-        return 409, {"detail": str(e)}
+        return 404, {"detail": str(e)}
 
-    return 201, ChurchAffiliationRequestOut.from_orm(church_affiliation)
+    if invite is None:
+        return 404, {"detail": "Convite não encontrado"}
 
+    out = ChurchAffiliationOfflineLookupOut.from_orm(invite)
+
+    if out.is_expired:
+        return 410, {"detail": "Este convite expirou. Solicite um novo à igreja remetente."}
+
+    return 200, out
 
 # ============================================================
 # SEDE → IGREJA NÃO CADASTRADA (OFFLINE) - ENVIAR CONVITE
@@ -87,8 +157,7 @@ def create_church_offline_invite(
     except ValidationError as e:
         return 409, {"detail": str(e)}
 
-    # Retorna com URL de aceite
-    invite_url = f"{request.build_absolute_uri('/')}api/community/church/affiliation/offline-accept?code={church_affiliation.code}"
+    invite_url = f"{settings.FRONTEND_URL}/dashboard/community/affiliations/{church_affiliation.code}"
     
     return 201, ChurchAffiliationOfflineInviteOut(
         id=church_affiliation.id,
@@ -99,6 +168,126 @@ def create_church_offline_invite(
         invite_url=invite_url,
     )
 
+# ============================================================
+# SEDE → IGREJA CADASTRADA (ONLINE) - ENVIAR CONVITE
+# ============================================================
+@router.post("/church/affiliation/invite/{to_church_id}",
+    auth=ChurchOnlyAuth(),
+    response={201: ChurchAffiliationRequestOut, 409: MessageOut},
+    summary="Igreja Paróquia envia convite de afiliação",
+    description=(
+        "Uma igreja do tipo Paróquia pode enviar um convite de afiliação "
+        "para uma igreja do tipo Comunidade. O convite fica pendente até que "
+        "a igreja convidada o aceite ou rejeite."
+    ),
+)
+@ratelimit(key="user", rate="30/m", block=True)
+def create_church_affiliation_invite(request, payload: ChurchAffiliationInviteIn, to_church_id: uuid.UUID):
+    from_church_id = request.auth.church.id    
+    try:
+        church_affiliation = create_authenticated_invite(from_church_id=from_church_id, to_church_id=to_church_id, message=payload.message)
+    except ValidationError as e:
+        return 409, {"detail": str(e)}
+
+    return 201, ChurchAffiliationRequestOut.from_orm(church_affiliation)
+
+
+# ============================================================
+# ACEITE DO CONVITE OFFLINE (público — sem auth)
+# ============================================================
+@router.post(
+    "/church/affiliation/offline/accept",
+    auth=None,
+    response={200: ChurchAffiliationOfflineAcceptWithTokensOut, 400: MessageOut, 404: MessageOut},
+    summary="Igreja anônima aceita o convite e recebe tokens JWT",
+    description=(
+        "Rota pública. A conta já existe (criada pela task no envio). "
+        "Este endpoint confirma o aceite e retorna tokens para login automático."
+    ),
+)
+@ratelimit(key="ip", rate="20/h", block=True)
+def accept_offline_invite_endpoint(request, code: str):
+    try:
+        result = accept_offline_invite(code=code)
+    except ValidationError as e:
+        msg = str(e)
+        status = 404 if "não encontrado" in msg else 400
+        return status, {"detail": msg}
+
+    return 200, ChurchAffiliationOfflineAcceptWithTokensOut(**result)
+
+
+# ============================================================
+# DETALHE DE UM CONVITE/SOLICITAÇÃO
+# ============================================================
+@router.get(
+    "/church/affiliation/{affiliation_id}",
+    auth=ChurchOnlyAuth(),
+    response={200: ChurchAffiliationRequestOut, 403: MessageOut, 404: MessageOut},
+    summary="Detalhe de um convite ou solicitação",
+)
+@ratelimit(key="user", rate="60/m", block=True)
+def get_church_affiliation_endpoint(
+    request,
+    affiliation_id: uuid.UUID,
+):
+    from ecclesia.apps.community.services.church_in_church_service import (
+        handle_affiliation_action,
+    )
+    from ecclesia.apps.community.selectors.church_in_church_selector import (
+        get_church_affiliation_request_by_id,
+    )
+    church = request.auth.church
+    affiliation = get_church_affiliation_request_by_id(affiliation_id)
+
+    if not affiliation:
+        return 404, {"detail": "Solicitação não encontrada."}
+
+    is_from = affiliation.from_church_id == church.id
+    is_to = affiliation.to_church_id == church.id if affiliation.to_church else False
+
+    if not is_from and not is_to:
+        return 403, {"detail": "Você não tem acesso a esta solicitação."}
+
+    return 200, ChurchAffiliationRequestOut.from_orm(affiliation)
+
+
+# ============================================================
+# AÇÃO EM CONVITE/SOLICITAÇÃO (autenticado — Igreja)
+# ============================================================
+@router.patch(
+    "/church/affiliation/{affiliation_id}/action",
+    auth=ChurchOnlyAuth(),
+    response={200: ChurchAffiliationRequestOut, 403: MessageOut, 404: MessageOut, 409: MessageOut},
+    summary="Aceitar, rejeitar ou cancelar solicitação/convite",
+    description=(
+        "accept/reject: apenas a igreja destinatária.\n"
+        "cancel: apenas a igreja remetente."
+    ),
+)
+@ratelimit(key="user", rate="30/m", block=True)
+def handle_affiliation_action_endpoint(
+    request,
+    affiliation_id: uuid.UUID,
+    payload: ChurchAffiliationRequestAction,
+):
+    church = request.auth.church
+
+    try:
+        affiliation = handle_affiliation_action(
+            affiliation_id=affiliation_id,
+            church=church,
+            action=payload.action,
+        )
+    except ValidationError as e:
+        msg = str(e)
+        if "não encontrada" in msg:
+            return 404, {"detail": msg}
+        return 409, {"detail": msg}
+    except PermissionError as e:
+        return 403, {"detail": str(e)}
+
+    return 200, ChurchAffiliationRequestOut.from_orm(affiliation)
 
 # ============================================================
 # COMUNIDADE → SEDE (ONLINE) - SOLICITAR AFILIAÇÃO
@@ -122,157 +311,9 @@ def create_church_affiliation_request(request,  payload: ChurchAffiliationReques
         church_affiliation = create_affiliation_request(
             from_church_id=from_church_id,
             to_church_id=to_church_id,
-            message=payload.message
+            message=payload.message,
         )
     except ValidationError as e:
         return 409, {"detail": str(e)}
 
     return 201, ChurchAffiliationRequestOut.from_orm(church_affiliation)
-
-
-# # ============================================================
-# # ACEITAR/REJEITAR/CANCELAR SOLICITAÇÃO/CONVITE
-# # ============================================================
-# @router.patch(
-#     "/church/affiliation/{affiliation_id}",
-#     auth=ChurchOnlyAuth(),
-#     response={200: ChurchAffiliationRequestOut, 404: MessageOut, 409: MessageOut},
-#     summary="Aceitar, rejeitar ou cancelar solicitação/convite",
-#     description=(
-#         "Aceitar: A igreja destino aceita o convite ou solicitação.\n"
-#         "Rejeitar: A igreja destino rejeita o convite ou solicitação.\n"
-#         "Cancelar: A igreja origem cancela o convite ou solicitação."
-#     ),
-# )
-# @ratelimit(key="user", rate="30/m", block=True)
-# def handle_affiliation_action(
-#     request,
-#     affiliation_id: uuid.UUID,
-#     payload: ChurchAffiliationRequestAction,
-# ):
-#     church = request.auth.church
-    
-#     # Busca a solicitação
-#     affiliation = ChurchAffiliationRequest.objects.filter(id=affiliation_id).first()
-#     if not affiliation:
-#         return 404, {"detail": "Solicitação não encontrada."}
-    
-#     # Verifica permissão
-#     if payload.action == "accept" or payload.action == "reject":
-#         # Apenas a igreja destino pode aceitar/rejeitar
-#         if affiliation.to_church_id != church.id:
-#             return 409, {"detail": "Você não tem permissão para esta ação."}
-#     elif payload.action == "cancel":
-#         # Apenas a igreja origem pode cancelar
-#         if affiliation.from_church_id != church.id:
-#             return 409, {"detail": "Você não tem permissão para esta ação."}
-#     else:
-#         return 409, {"detail": f"Ação inválida: {payload.action}"}
-    
-#     try:
-#         if payload.action == "accept":
-#             affiliation.accept()
-#         elif payload.action == "reject":
-#             affiliation.reject()
-#         elif payload.action == "cancel":
-#             affiliation.cancel()
-#     except ValidationError as e:
-#         return 409, {"detail": str(e)}
-    
-#     return 200, ChurchAffiliationRequestOut.from_orm(affiliation)
-
-
-# # ============================================================
-# # ACEITAR CONVITE OFFLINE POR CÓDIGO
-# # ============================================================
-# @router.post(
-#     "/church/affiliation/offline-accept",
-#     response={200: ChurchAffiliationOfflineAcceptOut, 404: MessageOut, 409: MessageOut},
-#     summary="Aceitar convite offline por código",
-#     description=(
-#         "Uma igreja não cadastrada pode aceitar um convite offline "
-#         "informando o código recebido por email."
-#     ),
-#     auth=None,  # ✅ Não requer autenticação
-# )
-# def accept_offline_invite(
-#     request,
-#     payload: ChurchAffiliationCodeLookupIn,
-# ):
-#     try:
-#         affiliation = validate_offline_invite_code(payload.code)
-#         if not affiliation:
-#             return 404, {"detail": "Código inválido ou expirado."}
-        
-#         # Aceita o convite offline
-#         affiliation.accept()
-        
-#         # Retorna informações para criar a igreja
-#         return 200, ChurchAffiliationOfflineAcceptOut(
-#             success=True,
-#             church_name=affiliation.invited_church_full_name,
-#             email=affiliation.invited_email,
-#             message="Convite aceito com sucesso! Crie sua igreja agora.",
-#             affiliation_id=affiliation.id,
-#         )
-#     except ValidationError as e:
-#         return 409, {"detail": str(e)}
-
-
-# # ============================================================
-# # LISTAR SOLICITAÇÕES/CONVITES DA IGREJA
-# # ============================================================
-# @router.get(
-#     "/church/affiliations",
-#     auth=ChurchOnlyAuth(),
-#     response={200: list[ChurchAffiliationRequestListOut]},
-#     summary="Listar todas as solicitações/convites da igreja",
-# )
-# @ratelimit(key="user", rate="60/m", block=True)
-# def list_church_affiliations(
-#     request,
-#     status: Optional[str] = None,
-#     request_type: Optional[str] = None,
-# ):
-#     church = request.auth.church
-    
-#     queryset = ChurchAffiliationRequest.objects.filter(
-#         Q(from_church_id=church.id) | Q(to_church_id=church.id)
-#     ).select_related("from_church", "to_church")
-    
-#     if status:
-#         queryset = queryset.filter(status=status)
-    
-#     if request_type:
-#         queryset = queryset.filter(request_type=request_type)
-    
-#     affiliations = queryset.order_by("-created_at")
-    
-#     return 200, [ChurchAffiliationRequestListOut.from_orm(a) for a in affiliations]
-
-
-# # ============================================================
-# # BUSCAR SOLICITAÇÃO/CONVITE POR ID
-# # ============================================================
-# @router.get(
-#     "/church/affiliation/{affiliation_id}",
-#     auth=ChurchOnlyAuth(),
-#     response={200: ChurchAffiliationRequestOut, 404: MessageOut},
-#     summary="Buscar solicitação/convite por ID",
-# )
-# @ratelimit(key="user", rate="60/m", block=True)
-# def get_church_affiliation(
-#     request,
-#     affiliation_id: uuid.UUID,
-# ):
-#     church = request.auth.church
-    
-#     affiliation = ChurchAffiliationRequest.objects.filter(
-#         Q(from_church_id=church.id) | Q(to_church_id=church.id),
-#         id=affiliation_id,
-#     ).select_related("from_church", "to_church").first()
-    
-#     if not affiliation:
-#         return 404, {"detail": "Solicitação não encontrada."}
-    
-#     return 200, ChurchAffiliationRequestOut.from_orm(affiliation)

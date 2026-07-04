@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>Bem-vindo à Ecclesia — Conta criada com sucesso</title>
+
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+
+    <style>
+        /* ── Reset ─────────────────────────────────────────────── */
+        * { box-sizing: border-box; }
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; display: block; outline: none; text-decoration: none; }
+        body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+
+        /* ── Preheader ─────────────────────────────────────────── */
+        .preheader {
+            display: none !important;
+            visibility: hidden;
+            mso-hide: all;
+            font-size: 1px;
+            line-height: 1px;
+            max-height: 0;
+            max-width: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        /* ── Wrapper ───────────────────────────────────────────── */
+        .email-wrapper {
+            background-color: #0e0118;
+            width: 100%;
+            padding: 48px 16px;
+        }
+
+        /* ── Card ──────────────────────────────────────────────── */
+        .email-card {
+            background-color: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            max-width: 620px;
+            width: 100%;
+            margin: 0 auto;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(212,175,55,0.08);
+        }
+
+        /* ── Header ────────────────────────────────────────────── */
+        .header {
+            background: linear-gradient(160deg, #1a0035 0%, #2d0a57 55%, #3b0764 100%);
+            padding: 44px 40px 36px;
+            text-align: center;
+        }
+
+        .header-ornament-top {
+            display: block;
+            width: 48px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #d4af37, transparent);
+            margin: 0 auto 20px;
+        }
+
+        .logo-text {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-weight: 700;
+            font-size: 36px;
+            color: #d4af37;
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            margin: 0;
+            line-height: 1;
+            text-shadow: 0 1px 20px rgba(212,175,55,0.3);
+        }
+
+        .header-tagline {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin: 14px 0 0;
+        }
+
+        .header-ornament-bottom {
+            display: block;
+            width: 48px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(212,175,55,0.5), transparent);
+            margin: 16px auto 0;
+        }
+
+        /* ── Banner ────────────────────────────────────────────── */
+        .banner-wrap {
+            line-height: 0;
+            font-size: 0;
+            overflow: hidden;
+            max-height: 220px;
+        }
+
+        .banner-wrap img {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* ── Icon badge ────────────────────────────────────────── */
+        .icon-wrap {
+            text-align: center;
+            margin-top: -28px;
+            margin-bottom: 8px;
+        }
+
+        .icon-badge {
+            display: inline-block;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2d0a57, #4a148c);
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 20px rgba(59,7,100,0.35);
+            line-height: 56px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        /* ── Body ──────────────────────────────────────────────── */
+        .body-cell {
+            padding: 32px 48px 48px;
+        }
+
+        .section-label {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: #d4af37;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin: 0 0 12px;
+        }
+
+        .heading {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a0035;
+            margin: 0 0 6px;
+            line-height: 1.3;
+        }
+
+        .divider {
+            width: 40px;
+            height: 2px;
+            background: #d4af37;
+            margin: 16px 0 24px;
+            border: none;
+        }
+
+        .body-text {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            color: #4a4a6a;
+            margin: 0 0 20px;
+            line-height: 1.75;
+        }
+
+        /* ── Credentials box ───────────────────────────────────── */
+        .credentials-box {
+            background: #f7f4ff;
+            border-left: 3px solid #d4af37;
+            border-radius: 0 10px 10px 0;
+            padding: 18px 22px;
+            margin-bottom: 28px;
+        }
+
+        .credentials-box-title {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #2d0a57;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 8px;
+        }
+
+        .credentials-box-text {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            color: #5a5a7a;
+            margin: 0;
+            line-height: 1.75;
+        }
+
+        .credentials-box .credential-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(45, 10, 87, 0.08);
+        }
+
+        .credentials-box .credential-item:last-child {
+            border-bottom: none;
+        }
+
+        .credentials-box .credential-label {
+            font-weight: 600;
+            color: #2d0a57;
+        }
+
+        .credentials-box .credential-value {
+            font-family: 'Courier New', 'Lucida Console', monospace;
+            color: #3b0764;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: rgba(45, 10, 87, 0.06);
+            padding: 2px 12px;
+            border-radius: 4px;
+        }
+
+        /* ── Success box ───────────────────────────────────────── */
+        .success-box {
+            background: #f0faf5;
+            border-left: 3px solid #2e7d32;
+            border-radius: 0 10px 10px 0;
+            padding: 18px 22px;
+            margin-bottom: 28px;
+        }
+
+        .success-box-title {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e5a2a;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 8px;
+        }
+
+        .success-box-text {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            color: #2a5a3a;
+            margin: 0;
+            line-height: 1.75;
+        }
+
+        /* ── Warning box ───────────────────────────────────────── */
+        .warning-box {
+            background: #fff8f0;
+            border-left: 3px solid #f57c00;
+            border-radius: 0 10px 10px 0;
+            padding: 18px 22px;
+            margin: 28px 0;
+        }
+
+        .warning-box-title {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #e65100;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 8px;
+        }
+
+        .warning-box-text {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            color: #5a3a1a;
+            margin: 0;
+            line-height: 1.75;
+        }
+
+        /* ── Section heading ───────────────────────────────────── */
+        .section-heading {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: #2d0a57;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 36px 0 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e8e0f5;
+        }
+
+        /* ── Data table ────────────────────────────────────────── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .data-table td {
+            padding: 11px 0;
+            border-bottom: 1px solid #f0ecf8;
+            vertical-align: top;
+        }
+
+        .data-table .label {
+            color: #8a80a0;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 600;
+            width: 36%;
+            padding-right: 16px;
+        }
+
+        .data-table .value {
+            color: #1a1a2e;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 400;
+            padding-left: 8px;
+        }
+
+        .data-table .value a {
+            color: #5a20aa;
+            text-decoration: none;
+        }
+
+        .data-table .value-success {
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        /* ── CTA ───────────────────────────────────────────────── */
+        .cta-wrap {
+            text-align: center;
+            margin: 36px 0 24px;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #d4af37 0%, #b8960f 100%);
+            color: #1a0035 !important;
+            text-decoration: none !important;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 16px 52px;
+            border-radius: 50px;
+            box-shadow: 0 6px 24px rgba(180,140,10,0.35);
+        }
+
+        .cta-btn-secondary {
+            display: inline-block;
+            background: transparent;
+            color: #5a20aa !important;
+            text-decoration: none !important;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 14px 40px;
+            border-radius: 50px;
+            border: 2px solid #5a20aa;
+            margin-top: 12px;
+        }
+
+        .cta-btn-secondary:hover {
+            background: #f5f0ff;
+        }
+
+        /* ── Fallback link ─────────────────────────────────────── */
+        .link-fallback {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .link-fallback p {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: #aaa;
+            margin: 0 0 6px;
+        }
+
+        .link-fallback a {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            color: #6a2aaa;
+            word-break: break-all;
+            text-decoration: underline;
+        }
+
+        /* ── Footer ────────────────────────────────────────────── */
+        .footer {
+            background: linear-gradient(160deg, #0e0020 0%, #1a0035 100%);
+            padding: 28px 40px;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: #d4af37;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        .footer-tagline {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin: 8px 0 0;
+        }
+
+        .footer-divider {
+            width: 32px;
+            height: 1px;
+            background: rgba(212,175,55,0.25);
+            margin: 14px auto;
+            border: none;
+        }
+
+        .footer-auto {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            color: rgba(255,255,255,0.2);
+            margin: 0;
+        }
+
+        /* ── Mobile ────────────────────────────────────────────── */
+        @media only screen and (max-width: 600px) {
+            .email-wrapper { padding: 24px 12px !important; }
+            .header { padding: 32px 24px 28px !important; }
+            .logo-text { font-size: 28px !important; letter-spacing: 6px !important; }
+            .banner-wrap { max-height: 160px !important; }
+            .banner-wrap img { max-height: 160px !important; }
+            .body-cell { padding: 28px 24px 36px !important; }
+            .heading { font-size: 22px !important; }
+            .data-table .label { width: 40% !important; font-size: 13px !important; }
+            .data-table .value { font-size: 13px !important; }
+            .credentials-box .credential-item { flex-direction: column !important; gap: 4px !important; }
+            .cta-btn { display: block !important; padding: 16px 24px !important; font-size: 14px !important; }
+            .cta-btn-secondary { display: block !important; padding: 14px 24px !important; }
+            .footer { padding: 24px !important; }
+        }
+
+        @media only screen and (max-width: 400px) {
+            .body-cell { padding: 20px 16px 28px !important; }
+            .logo-text { font-size: 22px !important; letter-spacing: 4px !important; }
+            .data-table .label { display: block; width: 100% !important; padding-bottom: 2px; }
+            .data-table .value { display: block; padding-left: 0 !important; }
+        }
+
+        /* ── Dark mode ─────────────────────────────────────────── */
+        @media (prefers-color-scheme: dark) {
+            .email-wrapper { background-color: #080010 !important; }
+            .email-card { box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(212,175,55,0.12) !important; }
+            .body-cell { background-color: #0e0118 !important; }
+            .heading { color: #e8e0f5 !important; }
+            .body-text { color: #a090c0 !important; }
+            .credentials-box { background: #180830 !important; }
+            .credentials-box-text { color: #a090c0 !important; }
+            .credentials-box .credential-value { background: rgba(212,175,55,0.15) !important; color: #d4af37 !important; }
+            .success-box { background: #0a2818 !important; }
+            .success-box-text { color: #7ab890 !important; }
+            .warning-box { background: #2a1a08 !important; }
+            .warning-box-text { color: #c8a070 !important; }
+            .section-heading { color: #c8b8e8 !important; border-color: #2a1a45 !important; }
+            .data-table .label { color: #6a5a8a !important; }
+            .data-table .value { color: #e0d8f5 !important; }
+            .data-table td { border-color: #1e0e38 !important; }
+            .cta-btn-secondary { color: #c090ff !important; border-color: #c090ff !important; }
+            .cta-btn-secondary:hover { background: rgba(192, 144, 255, 0.1) !important; }
+            .link-fallback a { color: #c090ff !important; }
+        }
+    </style>
+</head>
+
+<body>
+
+<span class="preheader">Bem-vindo à Ecclesia! Sua conta foi criada com sucesso. Acesse com a senha temporária: {{ temp_password }} &#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;</span>
+
+<div class="email-wrapper">
+    <div class="email-card">
+
+        <!-- ── HEADER ─────────────────────────────────────────── -->
+        <div class="header">
+            <span class="header-ornament-top"></span>
+            <p class="logo-text">ECCLESIA</p>
+            <p class="header-tagline">Gestão Inteligente para Igrejas</p>
+            <span class="header-ornament-bottom"></span>
+        </div>
+
+        <!-- ── BANNER ─────────────────────────────────────────── -->
+        {% if church_banner %}
+        <div class="banner-wrap">
+            <img src="{{ church_banner }}" alt="Banner da Igreja {{ from_church_name }}">
+        </div>
+        {% endif %}
+
+        <!-- ── ICON BADGE ────────────────────────────────────── -->
+        {% if not church_banner %}
+        <div class="icon-wrap">
+            <div class="icon-badge">🔑</div>
+        </div>
+        {% endif %}
+
+        <!-- ── BODY ───────────────────────────────────────────── -->
+        <div class="body-cell">
+
+            <p class="section-label">Bem-vindo à plataforma</p>
+            <h1 class="heading">Sua Conta Foi Criada!</h1>
+            <hr class="divider">
+
+            <!-- Success box -->
+            <div class="success-box">
+                <p class="success-box-title">✅ Conta criada e vínculo estabelecido</p>
+                <p class="success-box-text">
+                    Sua igreja <strong>{{ church_name }}</strong> agora está oficialmente
+                    registrada na plataforma Ecclesia e vinculada à igreja
+                    <strong>{{ from_church_name }}</strong>.
+                    Você já pode acessar o sistema com as credenciais abaixo.
+                </p>
+            </div>
+
+            <p class="body-text">
+                Olá, <strong style="color:#2d0a57;">{{ church_name }}</strong>!
+                É com grande alegria que confirmamos a criação da sua conta
+                na plataforma Ecclesia e o estabelecimento do vínculo com
+                <strong style="color:#2d0a57;">{{ from_church_name }}</strong>.
+            </p>
+
+            <!-- ── Credenciais de Acesso ────────────────────── -->
+            <div class="credentials-box">
+                <p class="credentials-box-title">🔐 Suas Credenciais de Acesso</p>
+                <div class="credential-item">
+                    <span class="credential-label">E-mail</span>
+                    <span class="credential-value">{{ member_email }}</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">Senha Temporária</span>
+                    <span class="credential-value">{{ temp_password }}</span>
+                </div>
+                <p class="credentials-box-text" style="margin-top: 12px; font-size: 13px;">
+                    ⚠️ Por segurança, recomendamos que você altere sua senha no
+                    <strong>primeiro acesso</strong>.
+                </p>
+            </div>
+
+            <!-- ── Aviso de Segurança ────────────────────────── -->
+            <div class="warning-box">
+                <p class="warning-box-title">🔒 Atenção!</p>
+                <p class="warning-box-text">
+                    Esta senha é <strong>temporária</strong> e deve ser alterada
+                    imediatamente após seu primeiro login. Não compartilhe suas
+                    credenciais com terceiros.
+                </p>
+            </div>
+
+            <!-- ── Sobre a Sede ───────────────────────────────── -->
+            <p class="section-heading">Sobre a Igreja Sede</p>
+
+            <table class="data-table">
+                <tr>
+                    <td class="label">Igreja</td>
+                    <td class="value">{{ from_church_name }}</td>
+                </tr>
+                {% if from_church_phone %}
+                <tr>
+                    <td class="label">Telefone</td>
+                    <td class="value">{{ from_church_phone }}</td>
+                </tr>
+                {% endif %}
+                {% if from_church_email %}
+                <tr>
+                    <td class="label">E-mail</td>
+                    <td class="value">
+                        <a href="mailto:{{ from_church_email }}">{{ from_church_email }}</a>
+                    </td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td class="label">Status do Vínculo</td>
+                    <td class="value value-success">✓ Ativo e Confirmado</td>
+                </tr>
+            </table>
+
+            <!-- ── Próximos Passos ────────────────────────────── -->
+            <p class="section-heading">Próximos Passos</p>
+
+            <table class="data-table">
+                <tr>
+                    <td class="label">1. Acesse o sistema</td>
+                    <td class="value">Entre com seu e-mail e senha temporária</td>
+                </tr>
+                <tr>
+                    <td class="label">2. Altere sua senha</td>
+                    <td class="value">Vá em Configurações > Segurança</td>
+                </tr>
+                <tr>
+                    <td class="label">3. Explore a plataforma</td>
+                    <td class="value">Conheça as ferramentas de gestão disponíveis</td>
+                </tr>
+            </table>
+
+            <!-- CTA Principal -->
+            <div class="cta-wrap">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ dashboard_url }}" style="height:52px;v-text-anchor:middle;width:260px;" arcsize="50%" stroke="f" fillcolor="#d4af37">
+                    <w:anchorlock/>
+                    <center style="color:#1a0035;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;letter-spacing:2px;">ACESSAR DASHBOARD</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
+                <a href="{{ dashboard_url }}" class="cta-btn">
+                    Acessar Dashboard
+                </a>
+                <!--<![endif]-->
+            </div>
+
+            <!-- CTA Secundário -->
+            <div class="cta-wrap" style="margin-top: 0;">
+                <!--[if !mso]><!-->
+                <a href="{{ change_password_url }}" class="cta-btn-secondary">
+                    Alterar Senha
+                </a>
+                <!--<![endif]-->
+            </div>
+
+            <!-- Fallback links -->
+            <div class="link-fallback">
+                <p>Caso os botões não funcionem, copie os links abaixo:</p>
+                <a href="{{ dashboard_url }}">Acessar Dashboard</a>
+                <br>
+                <a href="{{ change_password_url }}">Alterar Senha</a>
+            </div>
+
+        </div>
+
+        <!-- ── FOOTER ─────────────────────────────────────────── -->
+        <div class="footer">
+            <p class="footer-logo">ECCLESIA</p>
+            <p class="footer-tagline">Conectando igrejas, fortalecendo comunidades</p>
+            <hr class="footer-divider">
+            <p class="footer-auto">Este é um e-mail automático. Por favor, não responda esta mensagem.</p>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

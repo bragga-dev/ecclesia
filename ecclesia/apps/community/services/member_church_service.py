@@ -2,8 +2,7 @@
 MemberChurch Services — Igreja cadastra e lista membros.
 Pertence ao app community.
 """
-import secrets
-import string
+
 import uuid
 
 from django.db.models import QuerySet
@@ -28,20 +27,7 @@ from ecclesia.apps.community.selectors.member_church_selector import (
 from ecclesia.apps.community.selectors.member_church_selector import get_member_church_by_id, search_memberships_selector, apply_member_filters
 from ecclesia.apps.community.repositories.member_church_repository import update_member_church, delete_member_church_repository
 from ecclesia.apps.community.schemas.member_church_schema import ChurchMemberFilterIn
-
-
-def _generate_temp_password(length: int = 12) -> str:
-    alphabet = string.ascii_letters + string.digits + "!@#$%"
-    pwd = [
-        secrets.choice(string.ascii_uppercase),
-        secrets.choice(string.ascii_lowercase),
-        secrets.choice(string.digits),
-        secrets.choice("!@#$%"),
-    ]
-    pwd += [secrets.choice(alphabet) for _ in range(length - 4)]
-    secrets.SystemRandom().shuffle(pwd)
-    return "".join(pwd)
-
+from ecclesia.apps.community.utils.generate_temp_password import _generate_temp_password
 
 def register_member_by_church(
     church: Church,

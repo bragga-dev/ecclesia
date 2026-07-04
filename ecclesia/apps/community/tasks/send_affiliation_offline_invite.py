@@ -49,17 +49,19 @@ def send_affiliation_offline_invite(self, church_affiliation_id: uuid.UUID) -> N
             "from_church_website": affiliation.from_church.website,
             "from_church_instagram": affiliation.from_church.instagram,
             "from_church_about": affiliation.from_church.about,
+            "from_church_phone": affiliation.from_church.phone,
+            "banner_url": affiliation.from_church.banner_url,
+            "invited_church_full_name": affiliation.invited_church_full_name,
             "code": affiliation.code,
             "message": affiliation.message,
-            "from_church_phone":affiliation.from_church.phone,
             "request_id": affiliation.id,
             "created_at": affiliation.created_at,
             "expires_at": affiliation.expires_at,
-            "banner_url": affiliation.from_church.banner_url,
             "invitation_url": invitation_url,
         }
+
         EmailService.send_html_email(
-            subject="Nova Solicitação de Afiliação",
+            subject=f"Convite de Afiliação — {context['from_church_name']}",
             to_email=affiliation.invited_email,
             template_name="community/emails/affiliation_offline_invite.html",
             context=context,

@@ -7,6 +7,8 @@ from typing import Optional
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from ecclesia.apps.users.models.church import Church
+from django.db.models import Count, Q
+from django.utils import timezone
 
 # ── Busca individual ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +75,12 @@ def search_church_in_church_selector(queryset: QuerySet[ChurchAffiliationRequest
     ).distinct()
 
 # ── Queries por Status ──────────────────────────────────────────────────────
+
+def get_all_expires_at() -> QuerySet[ChurchAffiliationRequest]:
+    """Retorna todas as solicitações pendentes que já expiraram."""
+    today = timezone.now()
+    return ChurchAffiliationRequest.objects.filter(status=ChurchAffiliationRequest.Status.PENDING,expires_at__lt=today
+    ).select_related("from_church", "to_church").order_by("expires_at")
 
 def get_pending_affiliation_requests(church_id: uuid.UUID, as_from: bool = True) -> QuerySet[ChurchAffiliationRequest]:
     """
@@ -245,8 +253,6 @@ def get_affiliations_between_churches(church1_id: uuid.UUID, church2_id: uuid.UU
 
 # ── Queries Estatísticas ────────────────────────────────────────────────────
 
-from django.db.models import Count, Q
-from django.utils import timezone
 
 def get_affiliation_stats(
     church_id: uuid.UUID
@@ -403,22 +409,26 @@ def get_affiliation_requests_with_prefetch(
             "to_church__addresses"
         )
         .only(
-            "id",
-            "request_type",
-            "status",
-            "mode",
-            "code",
-            "message",
-            "created_at",
-            "accepted_at",
-            "expires_at",
-            "from_church__full_name",
-            "from_church__slug",
-            "to_church__full_name",
-            "to_church__slug",
-            "invited_email",
-            "invited_church_full_name"
-        )
+        "id",
+        "request_type",
+        "status",
+        "mode",
+        "code",
+        "message",
+        "created_at",
+        "accepted_at",
+        "expires_at",
+        "invited_email",
+        "invited_church_full_name",
+        "from_church__full_name",
+        "from_church__slug",
+        "from_church__user",          # ← adicionar
+        "from_church__user__email",   # ← adicionar
+        "to_church__full_name",
+        "to_church__slug",
+        "to_church__user",            # ← adicionar
+        "to_church__user__email",     # ← adicionar
+    )
         .order_by("-created_at")
     )
 
@@ -573,3 +583,4 @@ def get_church_affiliation_request_by_id(affiliation_id: uuid.UUID) -> ChurchAff
         .filter(id=affiliation_id)
         .first()
     )
+
