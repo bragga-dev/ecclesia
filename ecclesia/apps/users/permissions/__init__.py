@@ -49,6 +49,17 @@ from .auth_classes import (
     VerifiedUserAuth,
 )
 
+from ecclesia.apps.users.permissions.checker_permissions import (
+    MemberChurchPermissionChecker,
+    MemberChurchAllPermissionsChecker,
+)
+from ecclesia.apps.users.permissions.decorators import (
+    require_permission,
+    require_all_permissions,
+    HasPermission,
+    HasAllPermissions,
+)
+
 __all__ = [
     # Roles
     "is_church",
@@ -90,4 +101,11 @@ __all__ = [
     "AdminOnlyAuth",
     "ActiveUserAuth",
     "VerifiedUserAuth",
+    # Checkers
+    'MemberChurchPermissionChecker',
+    'MemberChurchAllPermissionsChecker',
+    'require_permission',
+    'require_all_permissions',
+    'HasPermission',
+    'HasAllPermissions',
 ]
