@@ -81,6 +81,13 @@ class ChurchAffiliationRequest(models.Model):
         self.status = self.Status.CANCELED
         self.save()
 
+    def expire(self):
+        """Marca a solicitação de afiliação como expirada."""
+        if self.status != self.Status.PENDING:
+            raise ValidationError("Só é possível expirar solicitações pendentes.")
+        self.status = self.Status.EXPIRED
+        self.save()
+
     def is_expired(self) -> bool:
         """Verifica se a solicitação está expirada."""
         if not self.expires_at:

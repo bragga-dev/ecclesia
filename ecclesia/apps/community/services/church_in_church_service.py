@@ -3,7 +3,7 @@ Church In Church Service — lógica de negócio de afiliações.
 """
 
 import uuid
-
+from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -19,6 +19,7 @@ from ecclesia.apps.users.services.auth import _make_tokens
 
 
 from ecclesia.apps.community.models.church_in_church_model import ChurchAffiliationRequest
+
 from ecclesia.apps.community.repositories.church_in_church_repository import (
     create_affiliation_between_church,
     delete_affiliation_between_church,
@@ -36,6 +37,7 @@ from ecclesia.apps.community.selectors.church_in_church_selector import (
     get_affiliation_stats,
     amply_church_in_church_filters,
     search_church_in_church_selector,
+    get_all_expires_at,
 
 )
 
@@ -46,9 +48,12 @@ from ecclesia.apps.community.tasks.send_affiliation_online_invite import send_af
 from ecclesia.apps.community.tasks.send_affiliation_request import send_affiliation_request
 from ecclesia.apps.community.tasks.send_confirme_affiliation_online_invite import send_confirme_affiliation_online_invite
 from ecclesia.apps.community.tasks.send_affiliation_accepted_to_parish import send_affiliation_accepted_to_parish
+from ecclesia.apps.community.tasks.send_affiliation_rejected_to_parish import send_affiliation_rejected_to_parish
+from ecclesia.apps.community.tasks.send_affiliation_cancelled_to_parish import send_affiliation_cancelled_to_parish
+from ecclesia.apps.community.tasks.check_offline_invite_expiration import check_offline_invite_expiration
+
 
 from ecclesia.apps.community.utils.generate_temp_password import _generate_temp_password
-
 
 
 # =========================================================================
@@ -125,8 +130,9 @@ def create_offline_invite(
         mode=ChurchAffiliationRequest.Mode.OFFLINE,
         message=message,
     )
-
     send_affiliation_offline_invite.delay(invite.id)
+    expiration_time = invite.expires_at + timedelta(seconds=1)
+    check_offline_invite_expiration.apply_async(args=[invite.id], eta=expiration_time,)
     return invite
 
 def get_pending_offline_invites(code: str) -> ChurchAffiliationRequest:
@@ -135,6 +141,7 @@ def get_pending_offline_invites(code: str) -> ChurchAffiliationRequest:
     if not invite:
         raise ValidationError("Convite não encontrado ou já utilizado.")
     return invite
+
 
 @transaction.atomic
 def accept_offline_invite(*, code: str) -> dict:
@@ -148,54 +155,29 @@ def accept_offline_invite(*, code: str) -> dict:
       6. Dispara e-mail de confirmação com credenciais + instrução de troca de senha
       7. Retorna tokens JWT para login automático
     """
-   
-    # ── 1. Valida convite ─────────────────────────────────────────────────
     invite = get_offline_invites_by_code(code)
-
     if not invite:
         raise ValidationError("Convite não encontrado ou já utilizado.")
-
     if invite.is_expired():
-        raise ValidationError(
-            "Este convite expirou. Entre em contato com a igreja para solicitar um novo."
-        )
-
-    # Garante que a conta ainda não foi criada (idempotência)
+        raise ValidationError("Este convite expirou. Entre em contato com a igreja para solicitar um novo.")
     if invite.to_church:
         raise ValidationError("Este convite já foi aceito.")
-
-    # ── 2. Gera senha temporária ──────────────────────────────────────────
+    
     temp_password = _generate_temp_password()
 
-    # ── 3. Cria User ──────────────────────────────────────────────────────
-    user = create_user(
-        email=invite.invited_email,
-        password=temp_password,
-        role=User.UserRole.CHURCH,
-    )
-    # Ativa direto — o e-mail já foi validado pelo próprio convite
+    user = create_user(email=invite.invited_email, password=temp_password, role=User.UserRole.CHURCH,)
+
     activate_user(user)
 
-    # ── 4. Cria Church com dados da Sede ──────────────────────────────────
-    church = create_church_profile(
-        user,
-        full_name=invite.invited_church_full_name,
-        church_type=Church.ChurchType.COMMUNITY,
+    church = create_church_profile(user, full_name=invite.invited_church_full_name, church_type=Church.ChurchType.COMMUNITY,)
 
-    )
-
-    # ── 5. Aceita o convite e vincula ─────────────────────────────────────
     invite.to_church = church
+
     invite.status = ChurchAffiliationRequest.Status.ACCEPTED
     invite.accepted_at = timezone.now()
     invite.save(update_fields=["to_church", "status", "accepted_at"])
-
-    # ── 6. Dispara e-mail de confirmação com credenciais ─────────────────
-    # Passa temp_password como argumento — não persiste no banco por segurança
     send_affiliation_offline_accepted.delay(invite.id, temp_password)
     send_affiliation_accepted_to_parish.delay(invite.id)
-
-    # ── 7. Retorna tokens para login automático ───────────────────────────
     tokens = _make_tokens(user)
 
     return {
@@ -233,7 +215,9 @@ def handle_affiliation_action(
         send_affiliation_accepted_to_parish.delay(affiliation.id)
     elif action == "reject":
         affiliation.reject()
+        send_affiliation_rejected_to_parish.delay(affiliation.id)
     elif action == "cancel":
+        send_affiliation_cancelled_to_parish.delay(affiliation.id)
         affiliation.cancel()
 
     return affiliation
@@ -291,3 +275,16 @@ def list_church_affiliations(
 
 def get_church_affiliation_stats_service(*, church_id: uuid.UUID) -> dict:
     return get_affiliation_stats(church_id=church_id)
+
+
+
+
+def cancel_expired_affiliations() -> None:
+    """
+    Cancela automaticamente pedidos de afiliação cujo prazo expirou.
+    """
+    invite = get_all_expires_at()
+    invite.update(status=ChurchAffiliationRequest.Status.CANCELLED)
+    invite_ids = [i.id for i in invite]
+    for invite_id in invite_ids:
+        send_affiliation_cancelled_to_parish.delay(invite_id)   

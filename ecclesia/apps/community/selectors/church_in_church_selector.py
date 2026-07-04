@@ -76,6 +76,12 @@ def search_church_in_church_selector(queryset: QuerySet[ChurchAffiliationRequest
 
 # ── Queries por Status ──────────────────────────────────────────────────────
 
+def get_all_expires_at() -> QuerySet[ChurchAffiliationRequest]:
+    """Retorna todas as solicitações pendentes que já expiraram."""
+    today = timezone.now()
+    return ChurchAffiliationRequest.objects.filter(status=ChurchAffiliationRequest.Status.PENDING,expires_at__lt=today
+    ).select_related("from_church", "to_church").order_by("expires_at")
+
 def get_pending_affiliation_requests(church_id: uuid.UUID, as_from: bool = True) -> QuerySet[ChurchAffiliationRequest]:
     """
     Retorna solicitações pendentes de uma igreja específica.
