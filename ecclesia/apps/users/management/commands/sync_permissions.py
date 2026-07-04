@@ -26,8 +26,11 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('🔄 Sincronizando permissões...'))
         
         # 1. Obtém todos os códigos definidos no código
-        defined_codes = set(PermissionCode.__dict__.values())
-        defined_codes = {c for c in defined_codes if not c.startswith('__')}
+        defined_codes = {
+            value
+            for key, value in PermissionCode.__dict__.items()
+            if not key.startswith('__') and isinstance(value, str)
+        }
         
         # 2. Busca todas as permissões existentes no banco
         existing_permissions = {
