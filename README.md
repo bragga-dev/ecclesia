@@ -1,6 +1,4 @@
-Aqui está o README.md reformulado e melhorado, com uma estrutura mais profissional e informativa para o projeto Ecclesia.
 
-```markdown
 # Ecclesia
 
 > Sistema de gestão de igrejas e comunidades
